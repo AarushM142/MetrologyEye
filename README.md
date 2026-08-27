@@ -55,11 +55,11 @@ The frontend (Next.js 15) is in the **Phase 7** implementation stage and is not 
 
 ```
 SIH2026/
-├── .env                    ← placeholder; real secrets go in MundeApp/backend/.env
+├── .env                    ← placeholder; real secrets go in MetrologyEyeApp/backend/.env
 ├── .gitignore
 ├── Plan.md                 ← original project design document
 ├── premortem.md            ← risk register
-└── MundeApp/
+└── MetrologyEyeApp/
     └── backend/            ← FastAPI application (Python 3.12)
         ├── .env            ← YOUR LOCAL SECRETS (never committed)
         ├── .env.example    ← template — copy this to .env
@@ -104,8 +104,8 @@ SIH2026/
 ## 4. Repository layout
 
 The repo lives at `C:\Users\Asus\SIH2026` (or wherever you clone it). There is currently
-**one runnable application** — the FastAPI backend in `MundeApp/backend/`. The Next.js
-frontend will live in `MundeApp/frontend/` once Phase 7 is implemented.
+**one runnable application** — the FastAPI backend in `MetrologyEyeApp/backend/`. The Next.js
+frontend will live in `MetrologyEyeApp/frontend/` once Phase 7 is implemented.
 
 ---
 
@@ -113,7 +113,7 @@ frontend will live in `MundeApp/frontend/` once Phase 7 is implemented.
 
 ```powershell
 # 1. Navigate to the backend
-cd MundeApp\backend
+cd MetrologyEyeApp\backend
 
 # 2. Create a virtual environment
 python -m venv .venv
@@ -136,7 +136,7 @@ pip install -r requirements.txt
 ## 6. Configure your environment
 
 ```powershell
-# From MundeApp/backend/
+# From MetrologyEyeApp/backend/
 cp .env.example .env
 ```
 
@@ -159,14 +159,14 @@ MAX_IMAGE_EDGE_PX=1600
 See `.env.example` for the full list with comments explaining each variable.
 
 > ⚠️ **Never commit `.env`.** It is already in `.gitignore`. If you accidentally stage it,
-> run `git rm --cached MundeApp/backend/.env` before pushing.
+> run `git rm --cached MetrologyEyeApp/backend/.env` before pushing.
 
 ---
 
 ## 7. Run the backend
 
 ```powershell
-# From MundeApp/backend/ with the venv activated
+# From MetrologyEyeApp/backend/ with the venv activated
 .venv\Scripts\python -m uvicorn app.main:app --reload --port 8000
 ```
 
@@ -191,7 +191,7 @@ curl http://localhost:8000/health
 ## 8. Run the tests
 
 ```powershell
-# From MundeApp/backend/ with the venv activated
+# From MetrologyEyeApp/backend/ with the venv activated
 .venv\Scripts\python -m pytest tests\ -v
 ```
 
@@ -293,7 +293,7 @@ official LMPC 2011 text.
 
 ### Adding a new environment variable
 1. Add it to `app/config.py` as a typed field on `Settings`.
-2. Add a commented entry to `MundeApp/backend/.env.example`.
+2. Add a commented entry to `MetrologyEyeApp/backend/.env.example`.
 3. Document it in this README.
 
 ### Code style
@@ -303,7 +303,7 @@ at the top of every file.
 
 ### No frontend yet
 The Next.js frontend is scaffolded in Phase 7. When it is added, it will live at
-`MundeApp/frontend/` and connect to the backend via the API above.
+`MetrologyEyeApp/frontend/` and connect to the backend via the API above.
 
 ---
 

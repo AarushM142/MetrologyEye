@@ -7,7 +7,7 @@ labels, extracts mandatory declarations, validates them against the Legal Metrol
 (Packaged Commodities) Rules, 2011, and emits a Form-I inspection notice PDF. Source specs:
 the PRD and the End-to-End Demo Workflow doc supplied in this session.
 
-`C:\Users\Asus\SIH2026\MundeApp` is currently empty apart from `.claude/` config, `.mcp.json`,
+`C:\Users\Asus\SIH2026\MetrologyEyeApp` is currently empty apart from `.claude/` config, `.mcp.json`,
 and the two Supabase skills — this is a greenfield build, no existing code to reuse.
 
 Three specification risks were identified during planning and are designed around below
@@ -36,7 +36,7 @@ already present for the frontend.
 ## Architecture
 
 ```
-MundeApp/
+MetrologyEyeApp/
 ├── backend/
 │   ├── requirements.txt
 │   ├── .env.example              # GEMINI_API_KEY, GEMINI_MODEL, CORS_ORIGIN

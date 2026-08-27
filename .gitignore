@@ -107,7 +107,7 @@ Desktop.ini
 report[0-9]*.html
 
 # PDF evidence crops and generated notices (runtime output, not source)
-MundeApp/backend/.artifacts/
+MetrologyEyeApp/backend/.artifacts/
 
 # ---------------------------------------------------------------------------
 # Claude / MCP tooling  (local dev convenience, not project code)
