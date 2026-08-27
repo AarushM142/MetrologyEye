@@ -1,0 +1,23 @@
+# MetrologyEye — line ending policy
+# Ensures all text files use LF in the repository, regardless of developer OS.
+# Windows developers: Git for Windows converts to CRLF on checkout automatically.
+
+* text=auto eol=lf
+
+# Force LF on these regardless of any global config
+*.py    text eol=lf
+*.yaml  text eol=lf
+*.yml   text eol=lf
+*.md    text eol=lf
+*.txt   text eol=lf
+*.json  text eol=lf
+*.toml  text eol=lf
+*.ini   text eol=lf
+*.env   text eol=lf
+
+# Binary — no newline translation
+*.png   binary
+*.jpg   binary
+*.jpeg  binary
+*.pdf   binary
+*.whl   binary
