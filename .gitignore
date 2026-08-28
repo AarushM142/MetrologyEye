@@ -27,8 +27,9 @@ eggs/
 wheels/
 sdist/
 develop-eggs/
-lib/
-lib64/
+/lib/
+/lib64/
+!MetrologyEyeApp/**/lib/
 parts/
 var/
 .installed.cfg
