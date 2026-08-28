@@ -1,30 +1,43 @@
 from app.schemas.analysis import (
     AnalyzeResponse,
+    BarcodeScale,
     Declaration,
     DegradationFlag,
     ImageMeta,
     NoticeRequest,
+    ReferenceObjectScale,
     ScaleInfo,
     ScaleSource,
     Summary,
     Timings,
     UrlIngestRequest,
 )
-from app.schemas.violations import BBox, DeclarationField, Finding, Severity
+from app.schemas.violations import (
+    BBox,
+    DeclarationField,
+    ExemptionResult,
+    Finding,
+    Severity,
+    Violation,
+)
 
 __all__ = [
     "AnalyzeResponse",
     "BBox",
+    "BarcodeScale",
     "Declaration",
     "DeclarationField",
     "DegradationFlag",
+    "ExemptionResult",
     "Finding",
     "ImageMeta",
     "NoticeRequest",
+    "ReferenceObjectScale",
     "ScaleInfo",
     "ScaleSource",
     "Severity",
     "Summary",
     "Timings",
     "UrlIngestRequest",
+    "Violation",
 ]

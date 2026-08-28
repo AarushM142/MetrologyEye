@@ -1,27 +1,27 @@
-"""Declaration fields, severities, and violation records.
+"""Declaration fields, severities, exemption results, and finding records.
 
-These types are the statutory vocabulary of the system. `Severity` in particular is
-load-bearing: font-height findings are WARNING and never VIOLATION, because the
-millimetre scale they rest on is an estimate (see schemas/analysis.py ScaleInfo).
+These types are the statutory vocabulary of the system.
 """
 
 from __future__ import annotations
 
 from enum import Enum
+from typing import Any
 
 from pydantic import BaseModel, Field
 
-# (x, y, width, height) in pixels of the *preprocessed* image. A tuple, not a model,
-# so it serialises to a JSON array exactly as the frontend canvas expects: [x,y,w,h].
+# (x, y, width, height) in pixels of the *preprocessed* image: [x, y, w, h].
 BBox = tuple[int, int, int, int]
 
 
 class Severity(str, Enum):
-    """Maps 1:1 onto the evidence-viewer colours in the demo spec."""
+    """Maps to the evidence-viewer colours and decision status."""
 
     VIOLATION = "VIOLATION"  # red box
     WARNING = "WARNING"  # yellow overlay
+    MANUAL_REQUIRED = "MANUAL_REQUIRED"  # grey/hatched box (e.g. font-check with no reliable scale)
     COMPLIANT = "COMPLIANT"  # green box
+    POTENTIAL_NON_COMPLIANCE = "POTENTIAL_NON_COMPLIANCE"
 
 
 class DeclarationField(str, Enum):
@@ -39,13 +39,18 @@ class DeclarationField(str, Enum):
     FSSAI_NUMBER = "fssai_number"
 
 
-class Finding(BaseModel):
-    """One rule outcome against one declaration.
+class ExemptionResult(BaseModel):
+    """Outcome of evaluating one statutory exemption (e.g. institutional pack, tiny pack)."""
 
-    A Finding is emitted for compliant declarations too (Severity.COMPLIANT), because
-    the evidence viewer must draw green boxes for what passed — an inspector needs to
-    see what was checked, not only what failed.
-    """
+    id: str
+    matched: bool
+    citation: str
+    description: str | None = None
+    suppressed_rules: list[str] = Field(default_factory=list)
+
+
+class Finding(BaseModel):
+    """One rule outcome against one declaration."""
 
     rule_id: str = Field(description="Stable key from rules/catalogue.yaml, e.g. UNIT_NONSTANDARD")
     severity: Severity
@@ -59,7 +64,13 @@ class Finding(BaseModel):
         ),
     )
     message: str = Field(description="Inspector-facing sentence, safe to print in a notice")
-    field: DeclarationField | None = None
+    field: DeclarationField | str | None = None
     bbox: BBox | None = None
     observed: str | None = Field(default=None, description="What was found on the label")
     expected: str | None = Field(default=None, description="What the rule requires")
+    confidence: float | None = Field(default=None, description="Rule-evaluation confidence")
+    evidence: dict[str, Any] | None = Field(default=None, description="Detailed evidence dictionary")
+
+
+# Alias for backwards compatibility / Plan terminology
+Violation = Finding

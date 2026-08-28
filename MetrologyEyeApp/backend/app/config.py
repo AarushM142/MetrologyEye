@@ -17,34 +17,42 @@ class Settings(BaseSettings):
 
     # --- Gemini --------------------------------------------------------------
     gemini_api_key: str = ""
-    # Deliberately not a code literal. gemini-1.5-flash is old enough that it may be
-    # unavailable on newly issued keys; swapping models must stay a one-line env change.
-    gemini_model: str = "gemini-1.5-flash"
-    gemini_timeout_s: float = 20.0
+    # Default is gemini-2.5-flash per SIH26034 plan v2
+    gemini_model: str = "gemini-2.5-flash"
+    gemini_timeout_s: float = 12.0
 
     # --- Server --------------------------------------------------------------
     cors_origin: str = "http://localhost:3000"
     max_upload_mb: int = 12
     analysis_ttl_seconds: int = 3600
 
-    # Longest edge before the image is sent to Gemini. First lever to pull if the
-    # <3s end-to-end NFR is breached — extraction latency dominates the pipeline.
+    # Longest edge before the image is sent to Gemini.
     max_image_edge_px: int = 1600
+
+    # --- Confidence thresholds -----------------------------------------------
+    ocr_field_min_confidence: float = 0.60
+    extract_field_min_confidence: float = 0.55
 
     # --- Statutory constants -------------------------------------------------
     # EAN-13 nominal symbol width at 100% magnification, per ISO/IEC 15420.
-    # Used by services/scale.py as the physical reference for px->mm.
     ean13_nominal_width_mm: float = 37.29
+
+    # --- Persistence / Supabase ----------------------------------------------
+    supabase_url: str = ""
+    supabase_key: str = ""
 
     @property
     def extraction_available(self) -> bool:
-        """False => services/extract.py serves the fixture extractor and the response
-        is flagged degraded=[EXTRACT_MOCKED]. The pipeline stays runnable without a key."""
+        """False => services/extract.py serves the fixture extractor."""
         return bool(self.gemini_api_key.strip())
 
     @property
     def rules_catalogue_path(self) -> Path:
         return BACKEND_ROOT / "app" / "services" / "rules" / "catalogue.yaml"
+
+    @property
+    def exemptions_path(self) -> Path:
+        return BACKEND_ROOT / "app" / "services" / "rules" / "exemptions.yaml"
 
 
 @lru_cache
