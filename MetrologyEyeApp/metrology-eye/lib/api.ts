@@ -45,9 +45,10 @@ export async function analyzeUpload(
     const data: AnalyzeResponse = await res.json();
     clientCache.set(data.analysis_id, data);
     return data;
-  } catch (err: any) {
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : String(err);
     // If backend is not running, provide standard demo analysis and log friendly notice
-    console.warn("Backend unavailable or upload failed, using demo pipeline result:", err.message);
+    console.warn("Backend unavailable or upload failed, using demo pipeline result:", message);
     const mockId = `mock-${Date.now().toString(36)}`;
     const mockData: AnalyzeResponse = {
       ...DEMO_ANALYSIS_RESPONSE,
@@ -79,8 +80,9 @@ export async function analyzeUrl(url: string): Promise<AnalyzeResponse> {
     const data: AnalyzeResponse = await res.json();
     clientCache.set(data.analysis_id, data);
     return data;
-  } catch (err: any) {
-    console.warn("Backend unavailable or URL analysis failed:", err.message);
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : String(err);
+    console.warn("Backend unavailable or URL analysis failed:", message);
     const mockId = `mock-url-${Date.now().toString(36)}`;
     const mockData: AnalyzeResponse = {
       ...DEMO_ANALYSIS_RESPONSE,

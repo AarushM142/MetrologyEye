@@ -8,7 +8,7 @@
  */
 export type BBox = [number, number, number, number];
 
-export type Severity = "VIOLATION" | "WARNING" | "COMPLIANT";
+export type Severity = "VIOLATION" | "WARNING" | "COMPLIANT" | "MANUAL_REQUIRED";
 
 export type DeclarationField =
   | "commodity_name"
@@ -22,7 +22,21 @@ export type DeclarationField =
   | "country_of_origin"
   | "fssai_number";
 
-export type ScaleSource = "ean13" | "manual" | "none";
+export type ScaleSource = "ean13" | "reference_object" | "manual" | "none";
+export type ScaleConfidenceTier = "HIGH" | "MEDIUM" | "MANUAL_REQUIRED";
+
+export interface BarcodeScale {
+  px_per_mm: number;
+  confidence: number;
+  assumed_magnification: number;
+  barcode_value?: string | null;
+}
+
+export interface ReferenceObjectScale {
+  px_per_mm: number;
+  confidence: number;
+  type?: string;
+}
 
 export interface ScaleInfo {
   px_per_mm: number;
@@ -31,6 +45,9 @@ export interface ScaleInfo {
   assumed_magnification: number;
   barcode_value: string | null;
   note: string;
+  tier?: ScaleConfidenceTier;
+  barcode?: BarcodeScale | null;
+  reference_object?: ReferenceObjectScale | null;
 }
 
 export type GeometrySource = "ocr" | "vlm" | "none";
@@ -42,6 +59,9 @@ export interface Declaration {
   confidence: number;
   geometry_source: GeometrySource;
   text_height_mm?: number | null;
+  ocr_confidence?: number;
+  extract_confidence?: number;
+  needs_review?: boolean;
 }
 
 export interface ImageMeta {
@@ -54,6 +74,7 @@ export interface Summary {
   violations: number;
   warnings: number;
   compliant: number;
+  manual_required?: number;
 }
 
 export interface Timings {
@@ -72,7 +93,10 @@ export type DegradationFlag =
   | "ocr_unavailable"
   | "extract_mocked"
   | "extract_failed"
-  | "partial_text";
+  | "partial_text"
+  | "quality_gate_failed"
+  | "glare_detected"
+  | "no_scale_reference";
 
 export interface Finding {
   rule_id: string;
@@ -97,6 +121,8 @@ export interface AnalyzeResponse {
   timings_ms: Timings;
   degraded: DegradationFlag[];
   manual_inspection_required: boolean;
+  extraction_status?: "ok" | "unavailable";
+  manual_fallback?: boolean;
 }
 
 export interface UrlIngestRequest {
@@ -133,7 +159,7 @@ export const DECLARATION_FIELD_LABELS: Record<DeclarationField, string> = {
 export const DEGRADATION_DESCRIPTIONS: Record<DegradationFlag, { title: string; detail: string }> = {
   no_barcode: {
     title: "No Barcode Detected",
-    detail: "Millimetre scale could not be derived automatically; statutory typography height checks are suppressed.",
+    detail: "Millimetre scale could not be derived automatically from EAN-13 barcode.",
   },
   blurry_image: {
     title: "Blurry Image Quality",
@@ -158,6 +184,18 @@ export const DEGRADATION_DESCRIPTIONS: Record<DegradationFlag, { title: string; 
   partial_text: {
     title: "Incomplete Text Capture",
     detail: "Portions of mandatory declarations appear truncated or occluded.",
+  },
+  quality_gate_failed: {
+    title: "Quality Gate Triggered",
+    detail: "Photo quality check flagged issues with focus or illumination. Retake recommended.",
+  },
+  glare_detected: {
+    title: "Specular Glare Detected",
+    detail: "Overexposed reflective highlights detected on package surface.",
+  },
+  no_scale_reference: {
+    title: "No Physical Scale Reference",
+    detail: "Neither barcode nor reference card resolved in frame. Typography height checks suppressed.",
   },
 };
 
