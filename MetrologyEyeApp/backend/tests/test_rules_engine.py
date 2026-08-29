@@ -15,7 +15,7 @@ from datetime import date
 import pytest
 
 from app.schemas import Declaration, DeclarationField, ScaleInfo, ScaleSource, Severity
-from app.services.rules.engine import evaluate, load_catalogue
+from app.services.rules.engine import evaluate, evaluate_exemptions, load_catalogue
 
 TODAY = date(2026, 8, 27)  # fixed, so date-dependent rules are reproducible
 
@@ -299,8 +299,6 @@ def test_defective_set_fires_every_expected_rule():
 
 
 # --- citation integrity -----------------------------------------------------------
-
-
 def test_every_citation_is_marked_unverified_until_checked():
     """Guards the one defect that would discredit the deliverable: a notice that presents
     an unchecked statutory reference as confirmed. Flip a rule's `verified: true` in the
@@ -309,3 +307,111 @@ def test_every_citation_is_marked_unverified_until_checked():
     assert findings, "expected findings to check"
     assert all(not f.verified_citation for f in findings)
     assert all(f.citation for f in findings)
+
+
+# --- Phase 6: exemptions ----------------------------------------------------------
+
+
+def _net_qty(value: str) -> list[Declaration]:
+    return [
+        d for d in compliant_set() if d.field is not DeclarationField.NET_QUANTITY
+    ] + [declaration(DeclarationField.NET_QUANTITY, value)]
+
+
+def test_evaluate_exemptions_returns_all_three_with_reasons():
+    """Every exemption is reported (matched or not) so the API can say *why*."""
+    results = evaluate_exemptions(compliant_set(), full_text=TAX_WORDING)
+    ids = [r.id for r in results]
+    assert ids == ["EXEMPT_INSTITUTIONAL", "EXEMPT_AGRI_PRODUCE", "EXEMPT_SMALL_PACK_FONT"]
+    for r in results:
+        assert r.citation
+        assert r.description
+        assert r.suppressed_rules
+
+
+def test_agri_bulk_exemption_matches_over_25kg_and_suppresses_all():
+    results = evaluate_exemptions(_net_qty("30 kg"), full_text="")
+    matched = next(r for r in results if r.id == "EXEMPT_AGRI_PRODUCE")
+    assert matched.matched
+    assert "ALL" in matched.suppressed_rules
+
+    findings = evaluate(_net_qty("30 kg"), full_text=TAX_WORDING, today=TODAY, exemptions=results)
+    assert findings == [], "an ALL exemption must suppress the entire analysis"
+
+
+def test_small_pack_exemption_suppresses_only_font_height():
+    """<=10 g/ml skips the font check but keeps the other rules running."""
+    results = evaluate_exemptions(_net_qty("8 g"), full_text=TAX_WORDING)
+    matched = next(r for r in results if r.id == "EXEMPT_SMALL_PACK_FONT")
+    assert matched.matched
+    assert matched.suppressed_rules == ["FONT_HEIGHT_BELOW_MIN"]
+
+    declarations = [d for d in _net_qty("8 g") if d.field is not DeclarationField.NET_QUANTITY]
+    declarations.append(declaration(DeclarationField.NET_QUANTITY, "8 g", height_mm=0.3))
+    findings = evaluate(declarations, full_text=TAX_WORDING, scale=SCALE, today=TODAY, exemptions=results)
+    assert "FONT_HEIGHT_BELOW_MIN" not in rule_ids(findings)
+    # other rules still fire on the non-exempt declarations
+    assert rule_ids(findings, Severity.VIOLATION) == set()
+
+
+def test_institutional_exemption_matches_keyword_and_suppresses_all():
+    declarations = _net_qty("500 g")
+    declarations.append(declaration(DeclarationField.COMMODITY_NAME, "Bulk industrial packaging"))
+    results = evaluate_exemptions(declarations, full_text="for institutional use only")
+    matched = next(r for r in results if r.id == "EXEMPT_INSTITUTIONAL")
+    assert matched.matched
+    assert "ALL" in matched.suppressed_rules
+
+
+def test_unmatched_exemption_does_not_suppress():
+    results = evaluate_exemptions(_net_qty("500 g"), full_text=TAX_WORDING)
+    assert all(not r.matched for r in results)
+    findings = evaluate(defective_set(), full_text="145.00", scale=SCALE, today=TODAY, exemptions=results)
+    assert rule_ids(findings, Severity.VIOLATION), "no exemption matched — rules must run"
+
+
+# --- Phase 6: scale tier + font height --------------------------------------------
+
+
+def tier_scale(tier: str) -> ScaleInfo:
+    return ScaleInfo(px_per_mm=7.5, confidence=0.8, source=ScaleSource.EAN13, tier=tier)  # type: ignore[arg-type]
+
+
+def test_medium_tier_font_check_is_forced_to_warning():
+    declarations = [d for d in compliant_set() if d.field is not DeclarationField.NET_QUANTITY]
+    declarations.append(declaration(DeclarationField.NET_QUANTITY, "500 g", height_mm=0.4))
+    findings = evaluate(declarations, full_text=TAX_WORDING, scale=tier_scale("MEDIUM"), today=TODAY)
+    hits = [f for f in findings if f.rule_id == "FONT_HEIGHT_BELOW_MIN"]
+    assert len(hits) == 1
+    assert hits[0].severity is Severity.WARNING
+
+
+def test_manual_required_tier_suppresses_font_and_emits_manual_finding():
+    declarations = [d for d in compliant_set() if d.field is not DeclarationField.NET_QUANTITY]
+    declarations.append(declaration(DeclarationField.NET_QUANTITY, "500 g", height_mm=0.4))
+    findings = evaluate(declarations, full_text=TAX_WORDING, scale=tier_scale("MANUAL_REQUIRED"), today=TODAY)
+    assert "FONT_HEIGHT_BELOW_MIN" not in rule_ids(findings)
+    manual = [f for f in findings if f.severity is Severity.MANUAL_REQUIRED]
+    assert len(manual) == 1
+    assert "manual verification required" in manual[0].message.lower()
+
+
+def test_high_tier_font_check_runs_normally():
+    declarations = [d for d in compliant_set() if d.field is not DeclarationField.NET_QUANTITY]
+    declarations.append(declaration(DeclarationField.NET_QUANTITY, "500 g", height_mm=0.4))
+    findings = evaluate(declarations, full_text=TAX_WORDING, scale=tier_scale("HIGH"), today=TODAY)
+    hits = [f for f in findings if f.rule_id == "FONT_HEIGHT_BELOW_MIN"]
+    assert len(hits) == 1
+    assert hits[0].severity is Severity.WARNING
+    assert not any(f.severity is Severity.MANUAL_REQUIRED for f in findings)
+
+
+def test_manual_required_finding_is_byte_identical_across_runs():
+    declarations = [d for d in compliant_set() if d.field is not DeclarationField.NET_QUANTITY]
+    declarations.append(declaration(DeclarationField.NET_QUANTITY, "500 g", height_mm=0.4))
+    runs = {
+        serialise(evaluate(declarations, full_text=TAX_WORDING, scale=tier_scale("MANUAL_REQUIRED"), today=TODAY))
+        for _ in range(6)
+    }
+    assert len(runs) == 1
+

@@ -15,18 +15,17 @@ class Settings(BaseSettings):
         env_file=BACKEND_ROOT / ".env", env_file_encoding="utf-8", extra="ignore"
     )
 
-    # --- Gemini --------------------------------------------------------------
-    gemini_api_key: str = ""
-    # Default is gemini-2.5-flash per SIH26034 plan v2
-    gemini_model: str = "gemini-2.5-flash"
-    gemini_timeout_s: float = 12.0
+    # --- DeepInfra -----------------------------------------------------------
+    deepinfra_api_key: str = ""
+    deepinfra_model: str = "meta-llama/Llama-3.2-90B-Vision-Instruct"
+    deepinfra_timeout_s: float = 120.0
 
     # --- Server --------------------------------------------------------------
     cors_origin: str = "http://localhost:3000"
     max_upload_mb: int = 12
     analysis_ttl_seconds: int = 3600
 
-    # Longest edge before the image is sent to Gemini.
+    # Longest edge before the image is sent to the VLM.
     max_image_edge_px: int = 1600
 
     # --- Confidence thresholds -----------------------------------------------
@@ -37,14 +36,10 @@ class Settings(BaseSettings):
     # EAN-13 nominal symbol width at 100% magnification, per ISO/IEC 15420.
     ean13_nominal_width_mm: float = 37.29
 
-    # --- Persistence / Supabase ----------------------------------------------
-    supabase_url: str = ""
-    supabase_key: str = ""
-
     @property
     def extraction_available(self) -> bool:
         """False => services/extract.py serves the fixture extractor."""
-        return bool(self.gemini_api_key.strip())
+        return bool(self.deepinfra_api_key.strip())
 
     @property
     def rules_catalogue_path(self) -> Path:

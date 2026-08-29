@@ -1,9 +1,9 @@
 """Word-level OCR via PaddleOCR.
 
-OCR exists here for one reason: **geometry**. Gemini reads the label far better than any
+OCR exists here for one reason: **geometry**. The VLM reads the label far better than any
 OCR engine, but its bounding boxes are approximate, and we need boxes precise enough to
 measure a letter against a statutory millimetre minimum. So PaddleOCR supplies exact word
-polygons and `fuse.py` attaches them to the values Gemini extracted.
+polygons and `fuse.py` attaches them to the values the VLM extracted.
 
 PaddleOCR is imported lazily and behind a cache. A missing or broken install degrades the
 run to `OCR_UNAVAILABLE` (no boxes, no font checks) instead of failing the request.
@@ -38,11 +38,13 @@ class OcrWord:
 
 
 @lru_cache(maxsize=1)
-def _engine() -> object | None:
-    """Build the PaddleOCR engine once. Returns None if unavailable.
+def _engine() -> dict[str, object] | None:
+    """Build the PaddleOCR engines once (English + Hindi). Returns None if unavailable.
 
-    First call downloads detection/recognition weights (~10 MB) and takes several
-    seconds; subsequent calls are fast. Warm this at startup before a live demo.
+    Indian packaging is heavily bilingual, so we run two recognition models: `en` for the
+    Latin text and `hi` for the Devanagari. First call downloads the weights for both
+    (~10 MB each) and takes several seconds; subsequent calls are fast. Warm this at
+    startup before a live demo.
     """
     try:
         from paddleocr import PaddleOCR
@@ -50,11 +52,13 @@ def _engine() -> object | None:
         logger.warning("PaddleOCR unavailable (%s); geometry will be VLM-only.", exc)
         return None
 
-    try:
-        return PaddleOCR(use_angle_cls=True, lang="en", show_log=False)
-    except Exception as exc:  # pragma: no cover - model download / init failure
-        logger.warning("PaddleOCR failed to initialise (%s).", exc)
-        return None
+    models: dict[str, object] = {}
+    for lang in ("en", "hi"):
+        try:
+            models[lang] = PaddleOCR(use_angle_cls=True, lang=lang, show_log=False)
+        except Exception as exc:  # pragma: no cover - model download / init failure
+            logger.warning("PaddleOCR (%s) failed to initialise (%s).", lang, exc)
+    return models or None
 
 
 def ocr_available() -> bool:
@@ -132,32 +136,69 @@ def _normalise_result(raw: object) -> list[tuple[np.ndarray, str, float]]:
     return out
 
 
+def _iou(box_a: BBox, box_b: BBox) -> float:
+    """Intersection over Union of two axis-aligned boxes."""
+    ax, ay, aw, ah = box_a
+    bx, by, bw, bh = box_b
+    ix0, iy0 = max(ax, bx), max(ay, by)
+    ix1, iy1 = min(ax + aw, bx + bw), min(ay + ah, by + bh)
+    inter = max(0.0, ix1 - ix0) * max(0.0, iy1 - iy0)
+    union = aw * ah + bw * bh - inter
+    if union <= 0:
+        return 0.0
+    return inter / union
+
+
+def _merge_overlapping(words: list[OcrWord]) -> list[OcrWord]:
+    """Collapse near-duplicate boxes from the two models, keeping the higher confidence.
+
+    English and Hindi models both recognise Latin text, so the same word frequently comes
+    back twice (once per engine, at slightly different boxes). When two boxes overlap
+    with IoU > 0.5 they are the same token — keep the more confident one. Otherwise the
+    boxes are distinct (e.g. the Hindi-only Devanagari line) and both are kept.
+    """
+    merged: list[OcrWord] = []
+    for word in words:
+        replaced = False
+        for index, existing in enumerate(merged):
+            if _iou(word.bbox, existing.bbox) > 0.5:
+                if word.confidence > existing.confidence:
+                    merged[index] = word
+                replaced = True
+                break
+        if not replaced:
+            merged.append(word)
+    return merged
+
+
 def read_words(image: np.ndarray) -> list[OcrWord]:
     """Run OCR. Returns [] when OCR is unavailable or finds nothing — never raises."""
-    engine = _engine()
-    if engine is None:
-        return []
-
-    try:
-        raw = engine.ocr(image, cls=True)
-    except Exception as exc:  # pragma: no cover - runtime inference failure
-        logger.warning("OCR inference failed (%s).", exc)
+    engines = _engine()
+    if not engines:
         return []
 
     words: list[OcrWord] = []
-    for polygon, text, confidence in _normalise_result(raw):
-        text = text.strip()
-        if not text or polygon.shape[0] < 4:
+    for engine in engines.values():
+        try:
+            raw = engine.ocr(image, cls=True)
+        except Exception as exc:  # pragma: no cover - runtime inference failure
+            logger.warning("OCR inference failed (%s).", exc)
             continue
-        words.append(
-            OcrWord(
-                text=text,
-                bbox=_to_bbox(polygon),
-                confidence=confidence,
-                cap_height_px=_cap_height(polygon, text),
+
+        for polygon, text, confidence in _normalise_result(raw):
+            text = text.strip()
+            if not text or polygon.shape[0] < 4:
+                continue
+            words.append(
+                OcrWord(
+                    text=text,
+                    bbox=_to_bbox(polygon),
+                    confidence=confidence,
+                    cap_height_px=_cap_height(polygon, text),
+                )
             )
-        )
-    return words
+
+    return _merge_overlapping(words)
 
 
 def full_text(words: list[OcrWord]) -> str:

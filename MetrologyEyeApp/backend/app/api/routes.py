@@ -17,8 +17,8 @@ from fastapi.responses import Response
 from starlette.concurrency import run_in_threadpool
 
 from app.config import get_settings
-from app.schemas import AnalyzeResponse, NoticeRequest, UrlIngestRequest
-from app.services import ingest, notice, pipeline
+from app.schemas import AnalyzeResponse, NoticeRequest, NoticeReviewRequest, UrlIngestRequest
+from app.services import ingest, notice, pipeline, storage
 from app.store import store
 
 logger = logging.getLogger(__name__)
@@ -57,6 +57,11 @@ async def _run(image_bytes: bytes, source: str, manual_px_per_mm: float | None) 
         ) from exc
 
     store.put(analysis, preview_png)
+
+    # Phase 7: persist the analysis to local disk before returning. Writes are atomic and
+    # the directory is auto-created, so this is the durable audit trail behind the notice.
+    storage.save_analysis(analysis)
+
     return analysis
 
 
@@ -93,10 +98,10 @@ async def analyze_url(request: UrlIngestRequest) -> AnalyzeResponse:
 
 @router.get("/analysis/{analysis_id}", response_model=AnalyzeResponse)
 def get_analysis(analysis_id: str) -> AnalyzeResponse:
-    """Re-read a stored analysis, so the results page survives a refresh."""
-    analysis = store.get(analysis_id)
+    """Re-read a persisted analysis from disk, so the results page survives a restart."""
+    analysis = storage.load_analysis(analysis_id)
     if analysis is None:
-        raise HTTPException(status.HTTP_404_NOT_FOUND, "Analysis not found or expired.")
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Analysis not found.")
     return analysis
 
 
@@ -124,25 +129,37 @@ def get_image(analysis_id: str) -> Response:
 
 @router.post("/notice", response_class=Response, responses={200: {"content": {"application/pdf": {}}}})
 async def create_notice(request: NoticeRequest) -> Response:
-    """Generate the Form-I inspection notice PDF for a stored analysis."""
-    analysis = store.get(request.analysis_id)
-    image_png = store.get_image(request.analysis_id)
-    if analysis is None or image_png is None:
-        raise HTTPException(status.HTTP_404_NOT_FOUND, "Analysis not found or expired.")
+    """Generate the Form-I inspection notice PDF from the persisted analysis."""
+    analysis = storage.load_analysis(request.analysis_id)
+    if analysis is None:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Analysis not found.")
 
     try:
-        pdf = await run_in_threadpool(notice.build_notice, analysis, image_png, request)
+        pdf = await run_in_threadpool(
+            notice.build_notice, analysis.model_dump(mode="json"), request
+        )
     except Exception as exc:  # pragma: no cover - ReportLab layout failure
         logger.exception("Notice generation failed")
         raise HTTPException(
             status.HTTP_500_INTERNAL_SERVER_ERROR, f"Could not generate notice: {exc}"
         ) from exc
 
-    filename = f"form-i-notice-{request.analysis_id[:8]}.pdf"
     return Response(
         content=pdf,
         media_type="application/pdf",
-        # inline: the preview screen embeds this in an iframe. The frontend adds a download
-        # button rather than forcing a download here.
-        headers={"Content-Disposition": f'inline; filename="{filename}"'},
+        # inline: the browser renders the PDF in a new tab rather than downloading it.
+        headers={"Content-Disposition": 'inline; filename="notice.pdf"'},
     )
+
+
+@router.patch("/notice/{notice_id}/review")
+def review_notice(notice_id: str, request: NoticeReviewRequest) -> dict[str, str]:
+    """Record a reviewer and reviewed_at timestamp on a persisted analysis.
+
+    Auth is stubbed: `reviewer_id` is an opaque string for now. In this local MVP the
+    notice is represented by its analysis record, so the review is stamped onto
+    `{analysis_id}.json` (the id in the URL is the analysis id).
+    """
+    if not storage.update_notice_review(notice_id, request.reviewer_id):
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Analysis not found.")
+    return {"id": notice_id, "reviewer_id": request.reviewer_id, "status": "reviewed"}

@@ -2,7 +2,7 @@
 
 These exist for two real reasons, not as scaffolding:
 
-1. **Offline operation.** With no `GEMINI_API_KEY`, `extract.py` serves `fixture_extraction()`
+1. **Offline operation.** With no `DEEPINFRA_API_KEY`, `extract.py` serves `fixture_extraction()`
    and the run is flagged `EXTRACT_MOCKED`. Everything downstream — rules, findings, the
    Form-I notice — is the real code path, so the deliverable stays demonstrable without a key.
 2. **Demo insurance.** A live demo that depends on a network call to a third party is a

@@ -48,7 +48,8 @@ def health() -> dict[str, object]:
 
     return {
         "status": "ok",
-        "extraction": "gemini" if settings.extraction_available else "mocked",
-        "gemini_model": settings.gemini_model if settings.extraction_available else None,
+        "extraction": "deepinfra" if settings.extraction_available else "mocked",
+        "deepinfra_model": settings.deepinfra_model if settings.extraction_available else None,
         "ocr": "paddleocr" if ocr_available() else "unavailable",
+        "persistence": "local-filesystem",
     }

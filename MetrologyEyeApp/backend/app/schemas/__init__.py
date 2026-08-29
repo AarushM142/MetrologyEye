@@ -5,6 +5,7 @@ from app.schemas.analysis import (
     DegradationFlag,
     ImageMeta,
     NoticeRequest,
+    NoticeReviewRequest,
     ReferenceObjectScale,
     ScaleInfo,
     ScaleSource,
