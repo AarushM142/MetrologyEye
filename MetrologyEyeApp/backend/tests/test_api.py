@@ -4,9 +4,10 @@ This is the first test to exercise `pipeline.py` and `notice.py` at all, and it 
 real HTTP so the multipart handling, the threadpool offload, storage, and the response schema
 are all covered rather than assumed.
 
-Extraction is forced offline (no `GEMINI_API_KEY`), so these tests never touch the network
-and never spend anyone's quota. Everything downstream of extraction — fusion, the rules
-engine, the Form-I notice — is the production code path; only the values are fixtures.
+The VLM call is mocked at the network boundary by `tests/conftest.py`, so these tests never
+touch the network and never spend anyone's quota. Everything downstream of extraction —
+fusion, the rules engine, the Form-I notice — is the real production code path; only the
+DeepInfra response is a fixture.
 """
 
 from __future__ import annotations
@@ -16,26 +17,11 @@ import numpy as np
 import pytest
 from fastapi.testclient import TestClient
 
-from app.config import get_settings
 from app.main import app
 from app.schemas import DeclarationField, Severity
 from tests.synth import NONCOMPLIANT_LINES, png_bytes, render_label
 
 VALID_CODE = "8901234567890"
-
-
-@pytest.fixture(autouse=True)
-def offline_extraction(monkeypatch):
-    """Force the fixture extractor regardless of the developer's environment.
-
-    Without this, a machine with a real key would send every test run to Gemini — slow,
-    billable, and non-deterministic. `get_settings` is cached, so the cache is cleared on
-    both sides of the test.
-    """
-    monkeypatch.setenv("GEMINI_API_KEY", "")
-    get_settings.cache_clear()
-    yield
-    get_settings.cache_clear()
 
 
 @pytest.fixture(scope="module")
@@ -68,7 +54,8 @@ def test_health_reports_which_extractor_is_live(client: TestClient):
     """The demo needs to know whether it is running mocked or live, without guessing."""
     body = client.get("/health").json()
     assert body["status"] == "ok"
-    assert body["extraction"] == "mocked"
+    assert body["extraction"] == "deepinfra"
+    assert body["deepinfra_model"] == "meta-llama/Llama-3.2-90B-Vision-Instruct"
 
 
 # --- analyze ---------------------------------------------------------------------
@@ -91,7 +78,8 @@ def test_analyze_returns_the_frozen_contract(client: TestClient, label_png: byte
     }
     assert body["source"] == "upload"
     assert body["image"]["preview_url"] == f"/api/image/{body['analysis_id']}"
-    assert body["degraded"] == ["extract_mocked"]
+    # Extraction ran through the mocked DeepInfra path — it must not have failed.
+    assert "extract_failed" not in body["degraded"]
     assert body["manual_inspection_required"] is False
 
 
@@ -279,7 +267,7 @@ def test_unknown_ids_are_404(client: TestClient):
 # --- notice ----------------------------------------------------------------------
 
 
-def test_notice_is_a_pdf_with_embedded_evidence(client: TestClient, label_png: bytes):
+def test_notice_is_a_preliminary_assessment_pdf(client: TestClient, label_png: bytes):
     body = _analyze(client, label_png)
     response = client.post(
         "/api/notice",
@@ -293,16 +281,14 @@ def test_notice_is_a_pdf_with_embedded_evidence(client: TestClient, label_png: b
 
     assert response.status_code == 200, response.text
     assert response.headers["content-type"] == "application/pdf"
-    # inline, not attachment: the preview screen embeds this in an iframe.
-    assert response.headers["content-disposition"].startswith("inline")
+    # inline, not attachment: the browser renders it in a new tab.
+    assert response.headers["content-disposition"] == 'inline; filename="notice.pdf"'
 
     pdf = response.content
     assert pdf.startswith(b"%PDF-")
     assert pdf.rstrip().endswith(b"%%EOF")
-    # The notice must always be a substantial document (headers, tables, statutory text).
-    # Evidence crops are embedded when bbox data is available; their absence means the
-    # document is smaller but still legally-structured. 8KB is the no-crop baseline.
-    assert len(pdf) > 8_000, f"notice is suspiciously small ({len(pdf)} bytes) — layout may have failed"
+    # A Phase 8 notice is a substantial document: banner, findings table, signature block.
+    assert len(pdf) > 2_000, f"notice is suspiciously small ({len(pdf)} bytes) — layout may have failed"
 
 
 def test_notice_works_without_inspector_details(client: TestClient, label_png: bytes):

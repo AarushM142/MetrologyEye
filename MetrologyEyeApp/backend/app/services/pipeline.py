@@ -10,11 +10,11 @@ Preprocessing now includes two new stages before OCR:
   - Curved-label dewarp: detects labels on cylindrical surfaces (bottles, cans) and applies
     a perspective correction so OCR works on a flat representation.
 
-Gemini's role changed from independent extractor to OCR verifier:
+The VLM's role changed from independent extractor to OCR verifier:
   - OCR runs first and owns the geometry (word polygons for font-height rules).
-  - Gemini receives the OCR full-text as primary evidence and verifies/corrects it,
+  - The VLM receives the OCR full-text as primary evidence and verifies/corrects it,
     with the image available only to resolve ambiguous characters (0/O, rn/m, etc.).
-  - `fuse.py` then attaches precise OCR boxes to the Gemini-verified values.
+  - `fuse.py` then attaches precise OCR boxes to the VLM-verified values.
 
 Every stage is timed, and the timings ship in the response. The <3 s NFR is then
 observable rather than asserted, and when it is missed the response says which stage
@@ -123,14 +123,25 @@ def analyze(
     # --- extract -----------------------------------------------------------------
     extraction = extract_service.extract(prepared.png_bytes, ocr_text=ocr_text)
     degraded.extend(extraction.degraded)
-    timings.extract = watch.lap()
+    # Advance the stopwatch regardless, but report the *precise* VLM call latency (ms)
+    # rather than the whole-stage wall time, so timings_ms["extract"] reflects the actual
+    # network+inference cost. Falls back to the stage time when no API call was made.
+    elapsed_extract_ms = watch.lap()
+    timings.extract = int(extraction.latency_ms) if extraction.latency_ms > 0 else elapsed_extract_ms
 
     # --- fuse + rules ------------------------------------------------------------
     declarations = fuse_service.fuse(
         extraction.values, words, scale, base_confidence=extraction.confidence
     )
+    # Phase 6 pre-filter: exemptions are evaluated before the rule catalogue. The
+    # results ship in the payload so an operator sees *why* rules were suppressed,
+    # and the matched ones are passed into the engine to drive suppression.
+    exemptions = rules_engine.evaluate_exemptions(declarations, full_text=extraction.full_text or ocr_text)
     findings = rules_engine.evaluate(
-        declarations, full_text=extraction.full_text or ocr_text, scale=scale
+        declarations,
+        full_text=extraction.full_text or ocr_text,
+        scale=scale,
+        exemptions=exemptions,
     )
     timings.rules = watch.lap()
     timings.total = watch.total()
@@ -151,9 +162,15 @@ def analyze(
         scale=scale,
         declarations=declarations,
         findings=findings,
+        exemptions_evaluated=exemptions,
         timings_ms=timings,
         degraded=unique_degraded,
         manual_inspection_required=bool(_REQUIRES_MANUAL_REVIEW.intersection(unique_degraded)),
+        raw_extraction={
+            "values": {k.value: v for k, v in extraction.values.items()},
+            "full_text": extraction.full_text,
+            "ocr_corrections": extraction.ocr_corrections,
+        },
     ).recount()
 
     logger.info(

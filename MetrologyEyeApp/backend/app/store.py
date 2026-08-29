@@ -1,8 +1,10 @@
-"""In-memory analysis store with TTL.
+"""In-memory image store with TTL.
 
-Neither spec asks for persistence, so analyses live in process for
-`ANALYSIS_TTL_SECONDS`. The interface is deliberately narrow (`put`/`get`/`put_image`/
-`get_image`) so swapping in Supabase later touches only this file.
+The analysis payload now lives on disk via `app/services/storage.py`; this in-memory
+store is retained solely for the preprocessed PNG (so `GET /api/image/{id}` can serve
+the exact frame the boxes were computed in) while an analysis is live. The interface is
+deliberately narrow (`put`/`get_image`) so swapping in object storage later touches only
+this file.
 """
 
 from __future__ import annotations
@@ -34,11 +36,6 @@ class AnalysisStore:
     def put(self, analysis: AnalyzeResponse, image_png: bytes) -> None:
         self._evict_expired()
         self._entries[analysis.analysis_id] = _Entry(analysis=analysis, image_png=image_png)
-
-    def get(self, analysis_id: str) -> AnalyzeResponse | None:
-        self._evict_expired()
-        entry = self._entries.get(analysis_id)
-        return entry.analysis if entry else None
 
     def get_image(self, analysis_id: str) -> bytes | None:
         self._evict_expired()

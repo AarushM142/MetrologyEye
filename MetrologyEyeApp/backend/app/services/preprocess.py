@@ -30,6 +30,14 @@ from app.schemas import DegradationFlag
 # Empirical: a sharp phone photo of a label sits well above 300; sub-100 is visibly soft.
 BLUR_VARIANCE_THRESHOLD = 100.0
 
+# Glare quality gate. A blown-out highlight (V >= threshold) over more than this fraction
+# of the frame means the capture is glaring enough to hide text the statute cares about,
+# so we surface `GLARED_IMAGE` to prompt a retake. This is deliberately more permissive
+# than `_reduce_glare`'s repair heuristics: a bright glossy package is fine, a mostly
+# overexposed frame is not.
+GLARE_PIXEL_V_THRESHOLD = 250
+GLARE_FRACTION_THRESHOLD = 0.05
+
 # A label smaller than this on its long edge cannot resolve the fine print that the
 # statutory font-height check is about.
 MIN_LONG_EDGE_PX = 640
@@ -391,6 +399,15 @@ def preprocess(data: bytes) -> PreprocessResult:
     blur_variance = float(cv2.Laplacian(gray, cv2.CV_64F).var())
     if blur_variance < BLUR_VARIANCE_THRESHOLD:
         degraded.append(DegradationFlag.BLURRY_IMAGE)
+
+    # --- glare quality gate ------------------------------------------------------
+    # Measured on the exposure-corrected, pre-repair frame: a highlight that the glare
+    # reduction below is about to pull down is still evidence the *capture* was glared.
+    # An overexposed fraction above the threshold flags the image for a retake.
+    hsv = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
+    overexposed = float(np.count_nonzero(hsv[:, :, 2] >= GLARE_PIXEL_V_THRESHOLD))
+    if overexposed / float(image.shape[0] * image.shape[1]) > GLARE_FRACTION_THRESHOLD:
+        degraded.append(DegradationFlag.GLARED_IMAGE)
 
     # --- deskew --------------------------------------------------------------
     angle = _estimate_skew(gray)

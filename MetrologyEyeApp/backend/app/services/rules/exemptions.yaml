@@ -1,0 +1,45 @@
+# =============================================================================
+# Legal Metrology exemption catalogue
+# =============================================================================
+# Statutory exemptions are evaluated *before* the rule catalogue in `engine.py`.
+# Each exemption lists the rules it suppresses; `ALL` suppresses the entire
+# analysis. A matched exemption is always returned in the API payload
+# (`AnalyzeResponse.exemptions_evaluated`) so an operator sees *why* the rules
+# were (or were not) applied.
+#
+# `match` selects the predicate in `engine.py` that decides whether the package
+# qualifies. Like the rule catalogue, every citation here is `unverified` until
+# checked against the official statute — see the top of catalogue.yaml.
+# =============================================================================
+
+meta:
+  statute: "Legal Metrology (Packaged Commodities) Rules, 2011"
+  catalogue_version: "0.1.0"
+
+exemptions:
+  - id: EXEMPT_INSTITUTIONAL
+    citation: "Rule 2(n) Explanation, Legal Metrology (Packaged Commodities) Rules, 2011"
+    description: >-
+      Packages sold to industrial or institutional consumers (not retail) are outside
+      the packaged-commodity declaration regime.
+    match: institutional_pack
+    suppresses:
+      - ALL
+
+  - id: EXEMPT_AGRI_PRODUCE
+    citation: "Rule 2(n), Legal Metrology (Packaged Commodities) Rules, 2011"
+    description: >-
+      Agricultural produce sold in bulk in packages of net weight exceeding 25 kg is
+      exempt from the retail-package declaration rules.
+    match: agri_bulk_gt_25kg
+    suppresses:
+      - ALL
+
+  - id: EXEMPT_SMALL_PACK_FONT
+    citation: "Rule 6(1) Explanation, Legal Metrology (Packaged Commodities) Rules, 2011"
+    description: >-
+      Very small packages (net quantity <= 10 g or 10 ml) are exempt from the minimum
+      letter-height (font-size) requirement because the panel is too small to carry it.
+    match: small_pack_le_10
+    suppresses:
+      - FONT_HEIGHT_BELOW_MIN

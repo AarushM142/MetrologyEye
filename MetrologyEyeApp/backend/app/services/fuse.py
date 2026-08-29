@@ -1,9 +1,9 @@
-"""Attach OCR geometry to Gemini-extracted values.
+"""Attach OCR geometry to VLM-extracted values.
 
-This module is the hinge of the whole design. Gemini knows *what* the label says; PaddleOCR
-knows *where* each word sits and how tall it is. Neither alone can support a font-height
-finding — the VLM's boxes are too coarse to measure millimetres, and OCR's transcription is
-too unreliable to identify which text is the net-quantity declaration.
+This module is the hinge of the whole design. The VLM knows *what* the label says;
+PaddleOCR knows *where* each word sits and how tall it is. Neither alone can support a
+font-height finding — the VLM's boxes are too coarse to measure millimetres, and OCR's
+transcription is too unreliable to identify which text is the net-quantity declaration.
 
 So: match each extracted value against consecutive OCR words by normalised similarity, and
 take the geometry from the OCR side. A `Declaration` that fails to match keeps its value and
@@ -60,7 +60,7 @@ def _best_window(target: str, words: list[OcrWord]) -> tuple[list[OcrWord], floa
     """Find the tightest run of consecutive OCR words most similar to `target`.
 
     `token_set_ratio` rather than plain ratio, because the extracted value is normally a
-    *subset* of the printed line: the label reads "Net Quantity: 500 gms" while Gemini
+    *subset* of the printed line: the label reads "Net Quantity: 500 gms" while the VLM
     returns "500 gms". Scorers that penalise extra tokens score that pairing at 51.9 and
     lose the match entirely — measured — and net quantity is the field most likely to carry
     a violation. Tolerating surplus tokens in the candidate is therefore the point.

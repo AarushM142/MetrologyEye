@@ -26,9 +26,9 @@ paddleocr==2.9.1
 setuptools>=75.0.0
 
 # --- Extraction --------------------------------------------------------------
-# Gemini is called over its REST API with httpx rather than through a vendor SDK.
-# Rationale: the endpoint contract is stable and version-independent, so a model
-# swap (GEMINI_MODEL env var) never becomes an SDK upgrade. See services/extract.py.
+# The DeepInfra VLM is called over its REST API with httpx rather than through a vendor
+# SDK. Rationale: the endpoint contract is stable and version-independent, so a model
+# swap (DEEPINFRA_MODEL env var) never becomes an SDK upgrade. See services/extract.py.
 httpx>=0.28.0
 
 # --- Rules & reporting -------------------------------------------------------
@@ -38,9 +38,6 @@ reportlab>=4.2.0
 
 # --- E-commerce URL ingestion -----------------------------------------------
 beautifulsoup4>=4.12.0
-
-# --- Database / Persistence --------------------------------------------------
-supabase>=2.10.0
 
 # --- Testing -----------------------------------------------------------------
 pytest>=8.3.0

@@ -548,3 +548,165 @@ explicitly, not glossed over: a production deployment would need either a data-p
 agreement, a self-hosted/open-weight extraction model, or on-device redaction of non-text
 regions before any image leaves departmental infrastructure. The prototype does not implement
 this; it is documented as the next hardening step."*
+
+Appendix A — Backend-only MVP: get something running TODAY
+
+Everything above is the real plan — build toward it over the 4–5 days. But if the goal for today is just "backend responds with a real, non-fake violation for a real photo," most of §5's phases are more than you need right now. This appendix is a stripped-down subset: it skips the frontend entirely, skips persistence, skips the exemption engine, skips multilingual OCR, skips the reference-card second scale source, and skips PDF polish. Nothing here contradicts the full plan — it's a subset of it, so nothing you build today gets thrown away; Phases 6–10 above just add onto this later.
+
+What's deliberately deferred (not part of today's scope):
+
+Frontend (Next.js) — test everything today via curl / Swagger UI (/docs) instead.
+Supabase persistence (analyses, notices tables) — today, findings just come back in the HTTP response; nothing is saved.
+Exemption pre-filter (exemptions.yaml) — skip it; no exemption logic fires today.
+Reference-object (ID-card) scale source and tiering — today, scale is barcode-only, and if the barcode isn't found, font-height checks are just skipped (log a note, don't fabricate a tier system yet).
+Multilingual OCR — English PaddleOCR model only today.
+Officer sign-off / review endpoint — skip PATCH /api/notice/{id}/review.
+A.1 — Environment (15–30 min)
+powershell
+winget install -e --id Python.Python.3.12
+
+New terminal, confirm python --version → 3.12.x.
+
+powershell
+cd C:\Users\Asus\SIH2026\MetrologyEyeApp
+python -m venv backend\venv
+backend\venv\Scripts\activate
+
+Create backend/requirements.txt with just what today needs:
+
+fastapi
+uvicorn[standard]
+pydantic>=2
+pydantic-settings
+python-multipart
+opencv-contrib-python
+paddleocr
+paddlepaddle
+google-generativeai
+pyyaml
+reportlab
+pytest
+powershell
+pip install -r backend\requirements.txt
+
+Sanity-check PaddleOCR downloads its model now, not later:
+
+powershell
+python -c "from paddleocr import PaddleOCR; PaddleOCR(lang='en')"
+
+Gate: import succeeds, English model cached locally.
+
+A.2 — Minimal skeleton and config (15 min)
+
+backend/.env:
+
+GEMINI_API_KEY=<your key>
+GEMINI_MODEL=gemini-2.5-flash
+CORS_ORIGIN=*
+
+backend/app/config.py — pydantic-settings reading the three vars above, plus two constants directly in code (no need for full env-driven thresholds today):
+
+python
+OCR_FIELD_MIN_CONFIDENCE = 0.60
+EXTRACT_FIELD_MIN_CONFIDENCE = 0.55
+
+backend/app/main.py — FastAPI app, permissive CORS, GET /health returning {"status":"ok"}.
+
+Gate: uvicorn app.main:app --reload starts; GET /health returns 200.
+
+A.3 — Schemas (10–15 min)
+
+Just enough of §4's contract to be useful — you can add the rest (scale tiers, exemptions, needs_review) later without breaking this:
+
+backend/app/schemas/analysis.py:
+
+BBox (x, y, w, h)
+Declaration (field, value, bbox: Optional[BBox], ocr_confidence, extract_confidence)
+Violation (rule_id, severity: Literal["VIOLATION","WARNING"], citation, message, field, bbox: Optional[BBox], verified_citation: bool = False)
+AnalyzeResponse (analysis_id, image, scale: Optional[dict], declarations: list[Declaration], violations: list[Violation], summary: dict, timings_ms: dict)
+
+Gate: models import cleanly with no circular imports.
+
+A.4 — Barcode-only scale (30–45 min)
+
+backend/app/services/scale.py:
+
+python
+def detect_barcode_scale(image) -> dict | None:
+    # cv2.barcode.BarcodeDetector, EAN-13, nominal width 37.29mm @ 100%
+    # returns {"px_per_mm": ..., "confidence": ..., "assumed_magnification": 1.0}
+    # returns None if no barcode found — caller must handle this, not crash
+
+No tiering logic yet — just scale = detect_barcode_scale(img); if None, font-height rule is skipped for this run (a MANUAL_REQUIRED style behavior, just not formalized as a tier system yet).
+
+Gate: run against one real barcode photo, px_per_mm looks sane (cross-check by hand: barcode's pixel width ÷ 37.29mm).
+
+A.5 — OCR (English only) (30–45 min)
+
+backend/app/services/ocr.py — call PaddleOCR(lang='en') once at module load (don't re-instantiate per request, it's slow), return word-level boxes + text + confidence.
+
+Gate: run against a real label photo, print the boxes, confirm net-quantity/MRP text is being picked up with reasonable confidence.
+
+A.6 — Gemini extraction, real API, with a timeout (30–45 min)
+
+backend/app/services/extract.py:
+
+Prompt Gemini for structured JSON only: field name → value (net_quantity, mrp, mfr_address, mfg_date, consumer_care, country_of_origin). Explicitly instruct it not to judge compliance — extraction only.
+request_timeout=12, no retry needed today (add the retry when you get to full Phase 5) — but do wrap in try/except so a timeout returns extraction_status: "unavailable" instead of crashing the request.
+
+Gate: real photo → real Gemini call → structured JSON with the six fields above (or fewer, if genuinely absent from the label).
+
+A.7 — Fuse (15–20 min)
+
+backend/app/services/fuse.py — for each Gemini field value, find the closest-matching OCR word/phrase by normalized string similarity, attach that OCR box + ocr_confidence to the declaration. If no match found above a similarity threshold, leave bbox: None rather than guessing.
+
+Gate: declarations in the API response carry real bounding boxes, not null, for fields that are actually visible on the label.
+
+A.8 — Minimal rules engine (45–60 min)
+
+backend/app/services/rules/catalogue.yaml — seed with just the highest-value rules so you have something to demo, skip the rest for today:
+
+yaml
+rules:
+  - id: UNIT_NONSTANDARD
+    check: "unit in ['gms','gm','ltr','lt']"
+    citation: "Rule 13, LMPC 2011"
+    severity: VIOLATION
+    verified: false
+  - id: MRP_MISSING_TAX_PHRASE
+    check: "mrp_present and 'inclusive of all taxes' not in mrp_text.lower()"
+    citation: "Rule 6, LMPC 2011"
+    severity: VIOLATION
+    verified: false
+  - id: MISSING_DECLARATION
+    check: "field not in declarations"
+    citation: "Rule 6, LMPC 2011"
+    severity: VIOLATION
+    verified: false
+  - id: FONT_HEIGHT_MIN
+    check: "scale is not None and ocr_box_height_mm < statutory_min_mm"
+    citation: "Rule 6, LMPC 2011 (Schedule)"
+    severity: WARNING
+    verified: false
+    # today: if scale is None, this rule is simply not evaluated — no exemption
+    # engine, no tier system yet, just "skip if we can't measure"
+
+backend/app/services/rules/engine.py — plain Python evaluator, no exemption pre-filter, no tiering: loop the catalogue, run each check, append a Violation on match. Keep it pure and deterministic (same input → same output) even at this minimal scope — that property is cheap to preserve now and expensive to retrofit later.
+
+Gate: pytest — feed 3–4 synthetic declaration sets, assert expected violations fire and re-running the same input twice gives byte-identical output.
+
+A.9 — Wire it into /api/analyze (20–30 min)
+
+backend/app/api/routes.py — POST /api/analyze accepting multipart image upload: preprocess (can be a no-op passthrough today, real deskew/CLAHE is Phase 3 of the full plan) → detect_barcode_scale → ocr → extract → fuse → engine.evaluate → assemble AnalyzeResponse → return JSON. No database write.
+
+Gate: curl -F "file=@label.jpg" http://localhost:8000/api/analyze returns a full, schema-valid JSON response with real violations, in well under 5 seconds, using the FastAPI auto-docs at /docs to test interactively if that's easier than curl.
+
+A.10 — (Optional, if time remains today) bare-bones PDF
+
+backend/app/services/notice.py — minimal ReportLab doc: list violations + citations + [unverified] tags + one plain-text line "PRELIMINARY — AI-ASSISTED DRAFT, NOT A LEGAL DETERMINATION." Skip the signature block and cropped-evidence images for today; add those when you reach full Phase 8.
+
+Gate: POST /api/notice with a valid analysis_id-shaped payload returns a PDF that opens and lists the same violations /api/analyze returned.
+
+What "done for today" looks like
+
+A running uvicorn process where a real photographed label, posted to /api/analyze via curl or /docs, returns real (not fixture) violations with real citations and real bounding boxes — and, if you got to A.10, a downloadable PDF summarizing them. No frontend, no database, no exemptions, no multilingual OCR, no reference-card calibration. Everything skipped here is still in the main plan above and slots in without rework once today's core loop works.

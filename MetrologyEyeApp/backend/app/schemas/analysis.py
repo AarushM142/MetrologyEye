@@ -6,9 +6,9 @@ This module defines the API schema matching Plan v2 §4 and Phase 2.
 from __future__ import annotations
 
 from enum import Enum
-from typing import Literal
+from typing import Any, Literal
 
-from pydantic import BaseModel, Field, model_validator
+from pydantic import BaseModel, Field
 
 from app.schemas.violations import BBox, DeclarationField, ExemptionResult, Finding, Severity
 
@@ -109,6 +109,7 @@ class DegradationFlag(str, Enum):
     NO_BARCODE = "no_barcode"
     NO_SCALE_REFERENCE = "no_scale_reference"
     BLURRY_IMAGE = "blurry_image"
+    GLARED_IMAGE = "glared_image"
     LOW_RESOLUTION = "low_resolution"
     OCR_UNAVAILABLE = "ocr_unavailable"
     EXTRACT_MOCKED = "extract_mocked"
@@ -122,7 +123,7 @@ class AnalyzeResponse(BaseModel):
     image: ImageMeta
     extraction_status: str = Field(default="ok", description="'ok' or 'unavailable'")
     manual_fallback: bool = Field(
-        default=False, description="True when Gemini is unavailable and demo fixtures are served."
+        default=False, description="True when the VLM is unavailable and demo fixtures are served."
     )
     scale: ScaleInfo | None = Field(
         default=None, description="Null when no scale reference was found."
@@ -136,6 +137,13 @@ class AnalyzeResponse(BaseModel):
     manual_inspection_required: bool = Field(
         default=False,
         description="True when degradation or tier is severe enough that a human must review.",
+    )
+    raw_extraction: dict[str, Any] | None = Field(
+        default=None,
+        description=(
+            "Audit trail: the structured values the AI verification layer returned. "
+            "Persisted verbatim to local storage; not rendered in the notice."
+        ),
     )
 
     @property
@@ -163,3 +171,9 @@ class NoticeRequest(BaseModel):
     inspector_name: str | None = None
     inspector_designation: str | None = None
     premises: str | None = None
+
+
+class NoticeReviewRequest(BaseModel):
+    """Stub auth: a reviewer is identified by an opaque string for now."""
+
+    reviewer_id: str

@@ -77,7 +77,7 @@ def test_value_matches_exactly_one_line(value: str, line_index: int):
 def test_extracted_value_may_be_a_subset_of_the_printed_line():
     """The scorer must tolerate the label's own prefix wording.
 
-    "Net Quantity: 500 gms" is printed; Gemini returns "500 gms". Scorers that penalise the
+    "Net Quantity: 500 gms" is printed; the VLM returns "500 gms". Scorers that penalise the
     surplus tokens score this pairing at 51.9 and drop the match — which would silently
     remove geometry from the field most likely to carry a violation.
     """
