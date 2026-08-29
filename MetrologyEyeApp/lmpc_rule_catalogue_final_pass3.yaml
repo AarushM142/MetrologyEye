@@ -1,0 +1,1447 @@
+# Third-pass gap-fill and consistency pass for the LMPC 2011 catalogue.
+# Base PDF: 43 pages; parsed text reviewed across the full PDF. Page images were used where available, including the numeric tables on pages 8-9 and 28-32.
+# Current-law additions in this pass include G.S.R. 456(E) (23 June 2023), the G.S.R. 629(E) country-of-origin/best-before additions, and machine-checkable Fourth Schedule declarations not previously catalogued.
+
+- id: NET_QUANTITY_DECLARED
+  description: "The package states the net quantity of the commodity."
+  citation: "Rule 6(1)(c), LMPC 2011"
+  verified: true
+  severity: VIOLATION
+  check: "net_quantity_present == true"
+  # confirmed against Rule 6(1)(c), LMPC 2011
+
+- id: NET_QUANTITY_UOM_STANDARD
+  description: "The net quantity is expressed using a unit of weight, measure, or number that gives accurate and adequate quantity information."
+  citation: "Rule 12(1), LMPC 2011"
+  verified: true
+  severity: VIOLATION
+  check: "net_quantity_unit != null"
+  # confirmed against Rule 12(1), LMPC 2011
+
+- id: SOLID_MASS_UNIT
+  description: "A solid, semi-solid, viscous, or solid-liquid mixture is declared by mass unless a Fourth Schedule exception applies."
+  citation: "Rule 12(2)(a), LMPC 2011"
+  verified: true
+  severity: VIOLATION
+  check: "commodity_form not in ['solid','semi-solid','viscous','solid_liquid_mixture'] or net_quantity_measure_type == 'mass' or fourth_schedule_exception == true"
+  # confirmed against Rule 12(2)(a), LMPC 2011
+
+- id: LINEAR_MEASURE_LENGTH_UNIT
+  description: "A commodity sold by linear measure is declared in units of length unless a Fourth Schedule exception applies."
+  citation: "Rule 12(2)(b), LMPC 2011"
+  verified: true
+  severity: VIOLATION
+  check: "not sold_by_linear_measure or net_quantity_measure_type == 'length' or fourth_schedule_exception == true"
+  # confirmed against Rule 12(2)(b), LMPC 2011
+
+- id: AREA_MEASURE_AREA_UNIT
+  description: "A commodity sold by area measure is declared in units of area unless a Fourth Schedule exception applies."
+  citation: "Rule 12(2)(c), LMPC 2011"
+  verified: true
+  severity: VIOLATION
+  check: "not sold_by_area_measure or net_quantity_measure_type == 'area' or fourth_schedule_exception == true"
+  # confirmed against Rule 12(2)(c), LMPC 2011
+
+- id: LIQUID_VOLUME_UNIT
+  description: "A liquid commodity or commodity sold by cubic measure is declared by volume unless a Fourth Schedule exception applies."
+  citation: "Rule 12(2)(d), LMPC 2011"
+  verified: true
+  severity: VIOLATION
+  check: "(commodity_form != 'liquid' and not sold_by_cubic_measure) or net_quantity_measure_type == 'volume' or fourth_schedule_exception == true"
+  # confirmed against Rule 12(2)(d), LMPC 2011
+
+- id: NUMBER_SOLD_NUMBER_DECLARATION
+  description: "A commodity sold by number is declared in terms of number unless a Fourth Schedule exception applies."
+  citation: "Rule 12(2)(e), LMPC 2011"
+  verified: true
+  severity: VIOLATION
+  check: "not sold_by_number or net_quantity_measure_type == 'number' or fourth_schedule_exception == true"
+  # confirmed against Rule 12(2)(e), LMPC 2011
+
+- id: MASS_BELOW_ONE_KG_IN_GRAMS
+  description: "A mass quantity below one kilogram is expressed in grams."
+  citation: "Rule 13(2)(a), LMPC 2011"
+  verified: true
+  severity: VIOLATION
+  check: "not (net_quantity_kg < 1) or net_quantity_unit == 'g'"
+  # confirmed against Rule 13(2)(a), LMPC 2011
+
+- id: LENGTH_BELOW_ONE_METRE_IN_CM
+  description: "A length quantity below one metre is expressed in centimetres."
+  citation: "Rule 13(2)(b), LMPC 2011"
+  verified: true
+  severity: VIOLATION
+  check: "not (net_length_m < 1) or net_quantity_unit == 'cm'"
+  # confirmed against Rule 13(2)(b), LMPC 2011
+
+- id: AREA_BELOW_ONE_SQM_IN_SQDM
+  description: "An area quantity below one square metre is expressed in square decimetres."
+  citation: "Rule 13(2)(c), LMPC 2011"
+  verified: true
+  severity: VIOLATION
+  check: "not (net_area_sq_m < 1) or net_quantity_unit == 'dm2'"
+  # confirmed against Rule 13(2)(c), LMPC 2011
+
+- id: VOLUME_BELOW_ONE_CUBIC_M_IN_CUBIC_CM
+  description: "A volume quantity below one cubic metre is expressed in cubic centimetres."
+  citation: "Rule 13(2)(d), LMPC 2011"
+  verified: true
+  severity: VIOLATION
+  check: "not (net_volume_cubic_m < 1) or net_quantity_unit == 'cm3'"
+  # confirmed against Rule 13(2)(d), LMPC 2011
+
+- id: VOLUME_BELOW_ONE_CUBIC_DM_IN_CUBIC_CM
+  description: "A volume quantity below one cubic decimetre is expressed in cubic centimetres."
+  citation: "Rule 13(2)(e), LMPC 2011"
+  verified: true
+  severity: VIOLATION
+  check: "not (net_volume_cubic_dm < 1) or net_quantity_unit == 'cm3'"
+  # confirmed against Rule 13(2)(e), LMPC 2011
+
+- id: VOLUME_BELOW_ONE_LITRE_IN_ML
+  description: "A volume quantity below one litre is expressed in millilitres."
+  citation: "Rule 13(2)(f), LMPC 2011"
+  verified: true
+  severity: VIOLATION
+  check: "not (net_volume_litre < 1) or net_quantity_unit == 'ml'"
+  # confirmed against Rule 13(2)(f), LMPC 2011
+
+- id: MASS_AT_OR_ABOVE_ONE_KG_UNIT
+  description: "A mass quantity equal to or more than one kilogram is expressed in kilograms or an allowed decimal sub-multiple or grams."
+  citation: "Rule 13(3)(a), LMPC 2011"
+  verified: true
+  severity: VIOLATION
+  check: "not (net_quantity_kg >= 1) or net_quantity_unit in ['kg','g','kg_decimal_submultiple']"
+  # confirmed against Rule 13(3)(a), LMPC 2011
+
+- id: LENGTH_AT_OR_ABOVE_ONE_METRE_UNIT
+  description: "A length quantity equal to or more than one metre is expressed in metres or an allowed decimal sub-multiple or centimetres."
+  citation: "Rule 13(3)(b), LMPC 2011"
+  verified: true
+  severity: VIOLATION
+  check: "not (net_length_m >= 1) or net_quantity_unit in ['m','cm','m_decimal_submultiple']"
+  # confirmed against Rule 13(3)(b), LMPC 2011
+
+- id: AREA_AT_OR_ABOVE_ONE_SQM_UNIT
+  description: "An area quantity equal to or more than one square metre is expressed in square metres or an allowed decimal sub-multiple."
+  citation: "Rule 13(3)(c), LMPC 2011"
+  verified: true
+  severity: VIOLATION
+  check: "not (net_area_sq_m >= 1) or net_quantity_unit in ['m2','m2_decimal_submultiple']"
+  # confirmed against Rule 13(3)(c), LMPC 2011
+
+- id: VOLUME_AT_OR_ABOVE_ONE_CUBIC_M_UNIT
+  description: "A volume quantity equal to or more than one cubic metre is expressed in cubic metres or an allowed decimal sub-multiple."
+  citation: "Rule 13(3)(d), LMPC 2011"
+  verified: true
+  severity: VIOLATION
+  check: "not (net_volume_cubic_m >= 1) or net_quantity_unit in ['m3','m3_decimal_submultiple']"
+  # confirmed against Rule 13(3)(d), LMPC 2011
+
+- id: VOLUME_AT_OR_ABOVE_ONE_LITRE_UNIT
+  description: "A volume quantity equal to or more than one litre is expressed in litres or an allowed decimal sub-multiple."
+  citation: "Rule 13(3)(e), LMPC 2011"
+  verified: true
+  severity: VIOLATION
+  check: "not (net_volume_litre >= 1) or net_quantity_unit in ['l','L','litre','litre_decimal_submultiple']"
+  # confirmed against Rule 13(3)(e), LMPC 2011
+
+- id: ONE_UNIT_CAN_USE_SMALLER_PERMITTED_UNIT
+  description: "Exactly one kilogram, metre, square metre, cubic decimetre, cubic metre, or litre may be expressed in the corresponding permitted smaller unit."
+  citation: "Rule 13(3) proviso, LMPC 2011"
+  verified: true
+  severity: VIOLATION
+  check: "not quantity_equals_exactly_one_permitted_base_unit or exact_one_unit_uses_only_permitted_equivalent_unit == true"
+  # confirmed against Rule 13(3) proviso, LMPC 2011
+
+- id: NO_DOZEN_SCORE_GROSS_UNITS
+  description: "The package does not state a quantity using dozen, score, gross, great gross, or a like counting term."
+  citation: "Rule 13(4), LMPC 2011"
+  verified: true
+  severity: VIOLATION
+  check: "not any(term in quantity_declaration_lower for term in ['dozen','score','gross','great gross'])"
+  # confirmed against Rule 13(4), LMPC 2011
+
+- id: ONLY_SI_SYSTEM_FOR_NET_QUANTITY
+  description: "The net quantity uses only the International System of Units."
+  citation: "Rule 13(5)(i), LMPC 2011"
+  verified: true
+  severity: VIOLATION
+  check: "net_quantity_unit_system == 'SI'"
+  # confirmed against Rule 13(5)(i), LMPC 2011
+
+- id: NUMBER_QUANTITY_WORD_PRESENT
+  description: "For an item sold by number, the package states the number, unit, piece, pair, set, or another word representing the quantity."
+  citation: "Rule 13(5)(ii), LMPC 2011 [2 November 2021 / G.S.R. 779(E), effective 1 October 2022 via G.S.R. 226(E)]"
+  verified: true
+  severity: VIOLATION
+  check: "not sold_by_number or number_quantity_word_present == true"
+  # confirmed against Rule 13(5)(ii), LMPC 2011 [2 November 2021 / G.S.R. 779(E), effective 1 October 2022 via G.S.R. 226(E)]
+
+- id: QUANTITY_DECLARATION_NO_MINIMUM_WORD
+  description: "The quantity declaration does not use the specific historical example 'minimum' as a quantity qualifier."
+  citation: "Rule 12(6), LMPC 2011 [historical examples superseded by 24 October 2011 / G.S.R. 784(E), effective 1 July 2012]"
+  verified: false
+  severity: VIOLATION
+  check: "'minimum' not in quantity_declaration_lower"
+  # not confirmed for current enforcement: the source itself identifies this example list as historical wording superseded by G.S.R. 784(E); it should not be treated as a current Rule 12(6) check.
+
+- id: QUANTITY_DECLARATION_NO_NOT_LESS_THAN
+  description: "The quantity declaration does not use the specific historical example 'not less than' as a quantity qualifier."
+  citation: "Rule 12(6), LMPC 2011 [historical examples superseded by 24 October 2011 / G.S.R. 784(E), effective 1 July 2012]"
+  verified: false
+  severity: VIOLATION
+  check: "'not less than' not in quantity_declaration_lower"
+  # not confirmed for current enforcement: the source identifies the example as historical wording superseded by G.S.R. 784(E).
+
+- id: QUANTITY_DECLARATION_NO_AVERAGE
+  description: "The quantity declaration does not use the specific historical example 'average' as a quantity qualifier."
+  citation: "Rule 12(6), LMPC 2011 [historical examples superseded by 24 October 2011 / G.S.R. 784(E), effective 1 July 2012]"
+  verified: false
+  severity: VIOLATION
+  check: "'average' not in quantity_declaration_lower"
+  # not confirmed for current enforcement: the source identifies the example as historical wording superseded by G.S.R. 784(E).
+
+- id: QUANTITY_DECLARATION_NO_ABOUT
+  description: "The quantity declaration does not use the specific historical example 'about' as a quantity qualifier."
+  citation: "Rule 12(6), LMPC 2011 [historical examples superseded by 24 October 2011 / G.S.R. 784(E), effective 1 July 2012]"
+  verified: false
+  severity: VIOLATION
+  check: "'about' not in quantity_declaration_lower"
+  # not confirmed for current enforcement: the source identifies the example as historical wording superseded by G.S.R. 784(E).
+
+- id: QUANTITY_DECLARATION_NO_APPROXIMATELY
+  description: "The quantity declaration does not use the specific historical example 'approximately' as a quantity qualifier."
+  citation: "Rule 12(6), LMPC 2011 [historical examples superseded by 24 October 2011 / G.S.R. 784(E), effective 1 July 2012]"
+  verified: false
+  severity: VIOLATION
+  check: "'approximately' not in quantity_declaration_lower"
+  # not confirmed for current enforcement: the source identifies the example as historical wording superseded by G.S.R. 784(E).
+
+- id: LITRE_L_SYMBOL_ALLOWED_FORM
+  description: "Where the unit for litre is shown, the letter L may be adopted to avoid confusion with I and 1."
+  citation: "Rule 13(5) Explanation, LMPC 2011 [14 May 2015 / G.S.R. 385(E)]"
+  verified: true
+  severity: VIOLATION
+  check: "litre_symbol_used != true or litre_symbol == 'L'"
+  # confirmed against Rule 13(5) Explanation, LMPC 2011 [14 May 2015 / G.S.R. 385(E)]
+
+- id: SUPPLEMENTARY_PACKAGE_COUNT_DECLARED
+  description: "A pre-package containing multiple packages of the same commodity states the number of packages as a supplementary quantity declaration."
+  citation: "Rule 13(6), LMPC 2011 [14 May 2015 / G.S.R. 385(E)]"
+  verified: true
+  severity: VIOLATION
+  check: "not same_commodity_multiple_packages or package_count_present == true"
+  # confirmed against Rule 13(6), LMPC 2011 [14 May 2015 / G.S.R. 385(E)]
+
+- id: SUPPLEMENTARY_PER_PACKAGE_QUANTITY_DECLARED
+  description: "A pre-package containing multiple packages of the same commodity states the quantity of each package as a supplementary quantity declaration."
+  citation: "Rule 13(6), LMPC 2011 [14 May 2015 / G.S.R. 385(E)]"
+  verified: true
+  severity: VIOLATION
+  check: "not same_commodity_multiple_packages or per_package_quantity_present == true"
+  # confirmed against Rule 13(6), LMPC 2011 [14 May 2015 / G.S.R. 385(E)]
+
+- id: MRP_PRESENT
+  description: "The retail sale price is declared on the package when an MRP declaration is required."
+  citation: "Rule 6(1)(e), LMPC 2011 [2 November 2021 / G.S.R. 779(E), effective 1 October 2022 via G.S.R. 226(E)]"
+  verified: true
+  severity: VIOLATION
+  check: "not mrp_required or mrp_present == true"
+  # confirmed against Rule 6(1)(e), LMPC 2011 [2 November 2021 / G.S.R. 779(E), effective 1 October 2022 via G.S.R. 226(E)]
+
+- id: MRP_MAXIMUM_PRICE_IDENTIFIED
+  description: "The retail sale price is clearly identified as the maximum retail price."
+  citation: "Rule 6(1)(e), LMPC 2011 [2 November 2021 / G.S.R. 779(E)]"
+  verified: true
+  severity: VIOLATION
+  check: "not mrp_required or mrp_maximum_price_identification_present == true"
+  # confirmed against Rule 6(1)(e), LMPC 2011 [2 November 2021 / G.S.R. 779(E)]
+
+- id: MRP_INR_CURRENCY
+  description: "The retail sale price is stated in Indian currency."
+  citation: "Rule 6(1)(e), LMPC 2011 [2 November 2021 / G.S.R. 779(E), effective 1 October 2022 via G.S.R. 226(E)]"
+  verified: true
+  severity: VIOLATION
+  check: "not mrp_required or mrp_currency == 'INR'"
+  # confirmed against Rule 6(1)(e), LMPC 2011 [2 November 2021 / G.S.R. 779(E), effective 1 October 2022 via G.S.R. 226(E)]
+
+- id: MRP_INCLUSIVE_OF_ALL_TAXES
+  description: "The MRP declaration states that the maximum retail price is inclusive of all taxes."
+  citation: "Rule 6(1)(e), LMPC 2011 [2 November 2021 / G.S.R. 779(E), effective 1 October 2022 via G.S.R. 226(E)]; Rule 2(m), LMPC 2011 [23 June 2017 / G.S.R. 629(E)]"
+  verified: true
+  severity: VIOLATION
+  check: "not mrp_required or mrp_inclusive_of_all_taxes == true"
+  # confirmed against Rule 6(1)(e), LMPC 2011 [2 November 2021 / G.S.R. 779(E), effective 1 October 2022 via G.S.R. 226(E)]; Rule 2(m), LMPC 2011 [23 June 2017 / G.S.R. 629(E)]
+
+- id: MRP_DISPLAYED_HALF_RUPEE_OR_RUPEE_INCREMENT
+  description: "The displayed MRP follows the historical rupee/50-paise rounding convention stated in the original 2011 Rule 2(m)."
+  citation: "Rule 2(m), LMPC 2011 [historical wording superseded by 2 November 2021 / G.S.R. 779(E), effective 1 October 2022]"
+  verified: false
+  severity: VIOLATION
+  check: "mrp_displayed_paise in [0,50]"
+  # not confirmed for current enforcement: the paise-rounding wording in Rule 2(m) was superseded by G.S.R. 779(E), effective from 1 October 2022 via G.S.R. 226(E).
+
+- id: LOWER_MRP_STICKER_DOES_NOT_COVER_ORIGINAL
+  description: "A sticker used to reduce the MRP does not cover the original MRP declaration."
+  citation: "Rule 6(3), LMPC 2011"
+  verified: true
+  severity: VIOLATION
+  check: "not reduced_mrp_sticker_used or original_mrp_declaration_covered == false"
+  # confirmed against Rule 6(3), LMPC 2011
+
+- id: UNIT_SALE_PRICE_PRESENT_WHEN_REQUIRED
+  description: "A unit sale price is declared whenever Rule 6(11) requires one, subject to its stated exemptions."
+  citation: "Rule 6(11), LMPC 2011 [28 March 2022 / G.S.R. 226(E); 6 October 2023 / G.S.R. 722(E)]"
+  verified: true
+  severity: VIOLATION
+  check: "not unit_sale_price_required or unit_sale_price_present == true"
+  # confirmed against Rule 6(11), LMPC 2011 [28 March 2022 / G.S.R. 226(E); 6 October 2023 / G.S.R. 722(E)]
+
+- id: UNIT_SALE_PRICE_TWO_DECIMALS
+  description: "The unit sale price is rounded off to the nearest two decimal place."
+  citation: "Rule 6(11), LMPC 2011 [28 March 2022 / G.S.R. 226(E)]"
+  verified: true
+  severity: VIOLATION
+  check: "not unit_sale_price_present or unit_sale_price_decimal_places == 2"
+  # confirmed against Rule 6(11), LMPC 2011 [28 March 2022 / G.S.R. 226(E)]
+
+- id: UNIT_SALE_PRICE_MASS_UNIT
+  description: "A mass-based unit sale price uses per gram when net quantity is less than one kilogram and per kilogram when net quantity is more than one kilogram."
+  citation: "Rule 6(11)(i), LMPC 2011 [28 March 2022 / G.S.R. 226(E)]"
+  verified: true
+  severity: VIOLATION
+  check: "not unit_sale_price_mass_basis or (net_quantity_kg < 1 and unit_sale_price_unit == 'g') or (net_quantity_kg > 1 and unit_sale_price_unit == 'kg')"
+  # confirmed against Rule 6(11)(i), LMPC 2011 [28 March 2022 / G.S.R. 226(E)]
+
+- id: UNIT_SALE_PRICE_LENGTH_UNIT
+  description: "A length-based unit sale price uses per centimetre when net length is less than one metre and per metre when net length is more than one metre."
+  citation: "Rule 6(11)(ii), LMPC 2011 [28 March 2022 / G.S.R. 226(E)]"
+  verified: true
+  severity: VIOLATION
+  check: "not unit_sale_price_length_basis or (net_length_m < 1 and unit_sale_price_unit == 'cm') or (net_length_m > 1 and unit_sale_price_unit == 'm')"
+  # confirmed against Rule 6(11)(ii), LMPC 2011 [28 March 2022 / G.S.R. 226(E)]
+
+- id: UNIT_SALE_PRICE_VOLUME_UNIT
+  description: "A volume-based unit sale price uses per millilitre when net volume is less than one litre and per litre when net volume is more than one litre."
+  citation: "Rule 6(11)(iii), LMPC 2011 [28 March 2022 / G.S.R. 226(E)]"
+  verified: true
+  severity: VIOLATION
+  check: "not unit_sale_price_volume_basis or (net_volume_litre < 1 and unit_sale_price_unit == 'ml') or (net_volume_litre > 1 and unit_sale_price_unit == 'litre')"
+  # confirmed against Rule 6(11)(iii), LMPC 2011 [28 March 2022 / G.S.R. 226(E)]
+
+- id: UNIT_SALE_PRICE_NUMBER_UNIT
+  description: "A unit sale price for an item sold by number or unit uses per number or unit."
+  citation: "Rule 6(11)(iv), LMPC 2011 [28 March 2022 / G.S.R. 226(E)]"
+  verified: true
+  severity: VIOLATION
+  check: "not unit_sale_price_number_basis or unit_sale_price_unit in ['number','unit']"
+  # confirmed against Rule 6(11)(iv), LMPC 2011 [28 March 2022 / G.S.R. 226(E)]
+
+- id: COMBINATION_GROUP_MULTIPIECE_USP_EXEMPTION
+  description: "A combination package, group package, or multi-piece package is exempt from declaring unit sale price under the 2023 proviso."
+  citation: "Rule 6(11) proviso, LMPC 2011 [6 October 2023 / G.S.R. 722(E)]"
+  verified: true
+  severity: WARNING
+  check: "not package_type in ['combination','group','multi-piece'] or unit_sale_price_required == false"
+  # confirmed against Rule 6(11) proviso, LMPC 2011 [6 October 2023 / G.S.R. 722(E)]
+
+- id: MANUFACTURER_NAME_PRESENT
+  description: "The package states the manufacturer name."
+  citation: "Rule 6(1)(a), LMPC 2011"
+  verified: true
+  severity: VIOLATION
+  check: "manufacturer_name_present == true"
+  # confirmed against Rule 6(1)(a), LMPC 2011
+
+- id: MANUFACTURER_ADDRESS_PRESENT
+  description: "The package states the manufacturer address."
+  citation: "Rule 6(1)(a), LMPC 2011"
+  verified: true
+  severity: VIOLATION
+  check: "manufacturer_address_present == true or (electronic_product and electronic_address_declared_via_qr and electronic_address_qr_scan_notice_present == true)"
+  # confirmed against Rule 6(1)(a), LMPC 2011
+
+- id: PACKER_NAME_PRESENT_WHEN_DIFFERENT
+  description: "When the manufacturer is not the packer, the package states the packer name."
+  citation: "Rule 6(1)(a), LMPC 2011"
+  verified: true
+  severity: VIOLATION
+  check: "manufacturer_is_packer == true or packer_name_present == true"
+  # confirmed against Rule 6(1)(a), LMPC 2011
+
+- id: PACKER_ADDRESS_PRESENT_WHEN_DIFFERENT
+  description: "When the manufacturer is not the packer, the package states the packer address."
+  citation: "Rule 6(1)(a), LMPC 2011"
+  verified: true
+  severity: VIOLATION
+  check: "manufacturer_is_packer == true or packer_address_present == true or (electronic_product and electronic_address_declared_via_qr and electronic_address_qr_scan_notice_present == true)"
+  # confirmed against Rule 6(1)(a), LMPC 2011
+
+- id: IMPORTER_NAME_PRESENT_FOR_IMPORTED_PACKAGE
+  description: "An imported package states the importer name."
+  citation: "Rule 6(1)(a), LMPC 2011"
+  verified: true
+  severity: VIOLATION
+  check: "not imported_package or importer_name_present == true"
+  # confirmed against Rule 6(1)(a), LMPC 2011
+
+- id: IMPORTER_ADDRESS_PRESENT_FOR_IMPORTED_PACKAGE
+  description: "An imported package states the importer address."
+  citation: "Rule 6(1)(a), LMPC 2011"
+  verified: true
+  severity: VIOLATION
+  check: "not imported_package or importer_address_present == true or (electronic_product and electronic_address_declared_via_qr and electronic_address_qr_scan_notice_present == true)"
+  # confirmed against Rule 6(1)(a), LMPC 2011
+
+- id: ACTUAL_BUSINESS_NAME_USED
+  description: "The manufacturer, packer, or importer name corresponds to the actual corporate name or, if unincorporated, the business name used in India."
+  citation: "Rule 10(2), LMPC 2011"
+  verified: true
+  severity: VIOLATION
+  check: "declared_entity_name_matches_actual_business_name == true"
+  # confirmed against Rule 10(2), LMPC 2011
+
+- id: COMPLETE_ADDRESS_FORMAT
+  description: "A complete address follows the current Rule 10(1) explanation for identifying the manufacturer or packer, using the registered-address formulation and the specified location information."
+  citation: "Rule 10(1) Explanation, LMPC 2011 [14 May 2015 / G.S.R. 385(E), effective 1 January 2016]"
+  verified: true
+  severity: VIOLATION
+  check: "complete_address_valid == true"
+  # confirmed against Rule 10(1) Explanation, LMPC 2011 [14 May 2015 / G.S.R. 385(E), effective 1 January 2016]
+
+- id: INDIA_PACKER_OR_IMPORTER_NAME_ON_PDP_FOR_FOREIGN_MANUFACTURE
+  description: "When a commodity manufactured outside India is packed in India, the Indian packer or importer name appears on the principal display panel."
+  citation: "Rule 10(1) proviso, LMPC 2011"
+  verified: true
+  severity: VIOLATION
+  check: "not foreign_manufactured_packed_in_india or indian_packer_or_importer_name_on_pdp == true"
+  # confirmed against Rule 10(1) proviso, LMPC 2011
+
+- id: INDIA_PACKER_OR_IMPORTER_ADDRESS_ON_PDP_FOR_FOREIGN_MANUFACTURE
+  description: "When a commodity manufactured outside India is packed in India, the Indian packer or importer complete address appears on the principal display panel."
+  citation: "Rule 10(1) proviso, LMPC 2011"
+  verified: true
+  severity: VIOLATION
+  check: "not foreign_manufactured_packed_in_india or indian_packer_or_importer_complete_address_on_pdp == true or (electronic_product and electronic_address_declared_via_qr and electronic_address_qr_scan_notice_present == true)"
+  # confirmed against Rule 10(1) proviso, LMPC 2011
+
+- id: COMMON_OR_GENERIC_NAME_PRESENT
+  description: "The package states the common or generic name of the commodity."
+  citation: "Rule 6(1)(b), LMPC 2011"
+  verified: true
+  severity: VIOLATION
+  check: "common_or_generic_name_present == true or (electronic_product and electronic_common_name_declared_via_qr and electronic_common_name_qr_scan_notice_present == true)"
+  # confirmed against Rule 6(1)(b), LMPC 2011
+
+- id: MULTI_PRODUCT_NAMES_PRESENT
+  description: "A package containing more than one product states the name of each product."
+  citation: "Rule 6(1)(b), LMPC 2011"
+  verified: true
+  severity: VIOLATION
+  check: "not multi_product_package or every_product_has_name == true or (electronic_product and electronic_multi_product_name_or_quantity_declared_via_qr and electronic_multi_product_qr_scan_notice_present == true)"
+  # confirmed against Rule 6(1)(b), LMPC 2011
+
+- id: MULTI_PRODUCT_QUANTITIES_PRESENT
+  description: "A package containing more than one product states the number or quantity of each product."
+  citation: "Rule 6(1)(b), LMPC 2011"
+  verified: true
+  severity: VIOLATION
+  check: "not multi_product_package or every_product_has_quantity == true or (electronic_product and electronic_multi_product_name_or_quantity_declared_via_qr and electronic_multi_product_qr_scan_notice_present == true)"
+  # confirmed against Rule 6(1)(b), LMPC 2011
+
+- id: MANUFACTURE_MONTH_YEAR_PRESENT
+  description: "The package states the month and year in which the commodity was manufactured, where that declaration is required."
+  citation: "Rule 6(1)(d), LMPC 2011 [2 November 2021 / G.S.R. 779(E), effective 1 October 2022 via G.S.R. 226(E)]"
+  verified: true
+  severity: VIOLATION
+  check: "not manufacture_date_required or manufacture_month_year_present == true"
+  # confirmed against Rule 6(1)(d), LMPC 2011 [2 November 2021 / G.S.R. 779(E), effective 1 October 2022 via G.S.R. 226(E)]
+
+- id: MANUFACTURE_MONTH_YEAR_FORMAT_ALLOWED
+  description: "The manufacturing month and year are expressed in words, numerals, or both."
+  citation: "Rule 6(1)(d) Explanation I, LMPC 2011"
+  verified: false
+  severity: VIOLATION
+  check: "not manufacture_month_year_present or manufacture_month_year_format in ['words','numerals','both']"
+  # not confirmed: the surviving Explanation I permits words, numerals, or both, but the parent clause was later narrowed to manufacture month/year by G.S.R. 779(E), so the exact present scope of this explanation needs human legal confirmation.
+
+- id: CONSUMER_CARE_NAME_OR_OFFICE_PRESENT
+  description: "The package states the name of the person or office that can be contacted for consumer complaints."
+  citation: "Rule 6(2), LMPC 2011"
+  verified: true
+  severity: VIOLATION
+  check: "consumer_care_name_or_office_present == true"
+  # confirmed against Rule 6(2), LMPC 2011
+
+- id: CONSUMER_CARE_ADDRESS_PRESENT
+  description: "The package states the consumer-care contact address."
+  citation: "Rule 6(2), LMPC 2011"
+  verified: true
+  severity: VIOLATION
+  check: "consumer_care_address_present == true"
+  # confirmed against Rule 6(2), LMPC 2011
+
+- id: CONSUMER_CARE_PHONE_PRESENT
+  description: "The package states a telephone number for consumer complaints."
+  citation: "Rule 6(2), LMPC 2011"
+  verified: true
+  severity: VIOLATION
+  check: "consumer_care_phone_present == true"
+  # confirmed against Rule 6(2), LMPC 2011
+
+- id: CONSUMER_CARE_EMAIL_WHEN_AVAILABLE
+  description: "An e-mail address is stated when one is available for consumer complaints."
+  citation: "Rule 6(2), LMPC 2011"
+  verified: true
+  severity: VIOLATION
+  check: "not consumer_care_email_available or consumer_care_email_present == true"
+  # confirmed against Rule 6(2), LMPC 2011
+
+- id: ALL_DECLARATIONS_ON_PRINCIPAL_DISPLAY_PANEL
+  description: "The declarations required under the rules appear on the principal display panel, except where a specific legal exception applies."
+  citation: "Rule 8(1), LMPC 2011"
+  verified: true
+  severity: VIOLATION
+  check: "all_required_declarations_on_principal_display_panel == true"
+  # confirmed against Rule 8(1), LMPC 2011
+
+- id: QUANTITY_CLEAR_SPACE_ABOVE
+  description: "The quantity declaration has clear space above equal to at least the height of its numeral."
+  citation: "Rule 8(1) proviso(a), LMPC 2011"
+  verified: true
+  severity: VIOLATION
+  check: "quantity_clear_space_above_mm >= net_quantity_numeral_height_mm"
+  # confirmed against Rule 8(1) proviso(a), LMPC 2011
+
+- id: QUANTITY_CLEAR_SPACE_BELOW
+  description: "The quantity declaration has clear space below equal to at least the height of its numeral."
+  citation: "Rule 8(1) proviso(a), LMPC 2011"
+  verified: true
+  severity: VIOLATION
+  check: "quantity_clear_space_below_mm >= net_quantity_numeral_height_mm"
+  # confirmed against Rule 8(1) proviso(a), LMPC 2011
+
+- id: QUANTITY_CLEAR_SPACE_LEFT
+  description: "The quantity declaration has clear space on the left of at least twice the height of its numeral."
+  citation: "Rule 8(1) proviso(b), LMPC 2011"
+  verified: true
+  severity: VIOLATION
+  check: "quantity_clear_space_left_mm >= 2 * net_quantity_numeral_height_mm"
+  # confirmed against Rule 8(1) proviso(b), LMPC 2011
+
+- id: QUANTITY_CLEAR_SPACE_RIGHT
+  description: "The quantity declaration has clear space on the right of at least twice the height of its numeral."
+  citation: "Rule 8(1) proviso(b), LMPC 2011"
+  verified: true
+  severity: VIOLATION
+  check: "quantity_clear_space_right_mm >= 2 * net_quantity_numeral_height_mm"
+  # confirmed against Rule 8(1) proviso(b), LMPC 2011
+
+- id: MRP_NUMERALS_CONTRAST_BACKGROUND
+  description: "The numerals of the retail sale price contrast conspicuously with the label background, except where the stated glass or plastic moulded/formed exception applies."
+  citation: "Rule 9(1)(b), LMPC 2011"
+  verified: true
+  severity: VIOLATION
+  check: "moulded_or_formed_glass_plastic_exception == true or mrp_numerals_contrast_background == true"
+  # confirmed against Rule 9(1)(b), LMPC 2011
+
+- id: NET_QUANTITY_NUMERALS_CONTRAST_BACKGROUND
+  description: "The numerals of the net quantity declaration contrast conspicuously with the label background, except where the stated glass or plastic moulded/formed exception applies."
+  citation: "Rule 9(1)(b), LMPC 2011"
+  verified: true
+  severity: VIOLATION
+  check: "moulded_or_formed_glass_plastic_exception == true or net_quantity_numerals_contrast_background == true"
+  # confirmed against Rule 9(1)(b), LMPC 2011
+
+- id: REQUIRED_DECLARATION_LANGUAGE
+  description: "The required package particulars are presented in English or Hindi in Devanagari script, with other languages permitted in addition."
+  citation: "Rule 9(4), LMPC 2011"
+  verified: true
+  severity: VIOLATION
+  check: "required_declaration_language_includes_english_or_hindi_devnagari == true"
+  # confirmed against Rule 9(4), LMPC 2011
+
+- id: DECLARATION_CHARACTER_WIDTH_RATIO
+  description: "The width of each applicable letter or numeral is at least one third of its height, except for numeral 1 and letters i, I, and l."
+  citation: "Rule 7(3) proviso, LMPC 2011 [23 October 2025 / G.S.R. 778(E) for medical-device exception]"
+  verified: true
+  severity: VIOLATION
+  check: "not rule7_width_check_applies or character in ['1','i','I','l'] or character_width_mm >= character_height_mm / 3"
+  # confirmed against Rule 7(3) proviso, LMPC 2011 [23 October 2025 / G.S.R. 778(E) for medical-device exception]
+
+- id: DECLARATION_LETTER_HEIGHT_NORMAL
+  description: "Letters in declarations are at least 1 mm high in the historical normal-case formulation of Rule 7(3)."
+  citation: "Rule 7(3), LMPC 2011 [historical wording superseded by 23 June 2017 / G.S.R. 629(E), effective 1 January 2018]"
+  verified: false
+  severity: VIOLATION
+  check: "declaration_letter_height_mm >= 1"
+  # not confirmed for current enforcement: this 1 mm letter-height requirement is historical Rule 7(3) wording superseded by G.S.R. 629(E).
+
+- id: DECLARATION_LETTER_HEIGHT_FORMED
+  description: "Letters in declarations are at least 2 mm high when blown, formed, molded, embossed, or perforated under the historical Rule 7(3) wording."
+  citation: "Rule 7(3), LMPC 2011 [historical wording superseded by 23 June 2017 / G.S.R. 629(E), effective 1 January 2018]"
+  verified: false
+  severity: VIOLATION
+  check: "lettering_process not in ['blown','formed','molded','embossed','perforated'] or declaration_letter_height_mm >= 2"
+  # not confirmed for current enforcement: this 2 mm formed/blown/molded/embossed/perforated letter-height requirement is historical Rule 7(3) wording superseded by G.S.R. 629(E).
+
+- id: NUMERAL_HEIGHT_UP_TO_200_G_ML
+  description: "For net quantities up to 200 g or ml, the old Rule 7 table required 1 mm normal or 2 mm when blown/formed/molded/embossed/perforated."
+  citation: "Rule 7(2)(i) and Table-I, LMPC 2011 [historical wording superseded by 23 June 2017 / G.S.R. 629(E), effective 1 January 2018]"
+  verified: false
+  severity: VIOLATION
+  check: "historical_rule7_font_check_result == true"
+  # not confirmed for current enforcement: the weight/volume table was replaced by the 2017 area-based Table-I under G.S.R. 629(E).
+
+- id: NUMERAL_HEIGHT_200_TO_500_G_ML
+  description: "For net quantities above 200 g or ml and up to 500 g or ml, the old Rule 7 table required 2 mm normal or 4 mm when blown/formed/molded/embossed/perforated."
+  citation: "Rule 7(2)(i) and Table-I, LMPC 2011 [historical wording superseded by 23 June 2017 / G.S.R. 629(E), effective 1 January 2018]"
+  verified: false
+  severity: VIOLATION
+  check: "historical_rule7_font_check_result == true"
+  # not confirmed for current enforcement: the weight/volume table was replaced by the 2017 area-based Table-I under G.S.R. 629(E).
+
+- id: NUMERAL_HEIGHT_ABOVE_500_G_ML
+  description: "For net quantities above 500 g or ml, the old Rule 7 table required 4 mm normal or 6 mm when blown/formed/molded/embossed/perforated."
+  citation: "Rule 7(2)(i) and Table-I, LMPC 2011 [historical wording superseded by 23 June 2017 / G.S.R. 629(E), effective 1 January 2018]"
+  verified: false
+  severity: VIOLATION
+  check: "historical_rule7_font_check_result == true"
+  # not confirmed for current enforcement: the weight/volume table was replaced by the 2017 area-based Table-I under G.S.R. 629(E).
+
+- id: NUMERAL_HEIGHT_BY_LENGTH_AREA_NUMBER_SMALL_PANEL
+  description: "For net quantity declared by length, area, or number on a principal display panel up to 100 cm2, the old Rule 7 table required 1 mm normal or 2 mm formed."
+  citation: "Rule 7(2)(ii) and Table-II, LMPC 2011 [historical wording superseded by 23 June 2017 / G.S.R. 629(E), effective 1 January 2018]"
+  verified: false
+  severity: VIOLATION
+  check: "historical_rule7_font_check_result == true"
+  # not confirmed for current enforcement: the historical Rule 7 Table-II was omitted by G.S.R. 629(E).
+
+- id: NUMERAL_HEIGHT_BY_LENGTH_AREA_NUMBER_100_TO_500_PANEL
+  description: "For net quantity declared by length, area, or number on a principal display panel above 100 cm2 and up to 500 cm2, the old Rule 7 table required 2 mm normal or 4 mm formed."
+  citation: "Rule 7(2)(ii) and Table-II, LMPC 2011 [historical wording superseded by 23 June 2017 / G.S.R. 629(E), effective 1 January 2018]"
+  verified: false
+  severity: VIOLATION
+  check: "historical_rule7_font_check_result == true"
+  # not confirmed for current enforcement: the historical Rule 7 Table-II was omitted by G.S.R. 629(E).
+
+- id: NUMERAL_HEIGHT_BY_LENGTH_AREA_NUMBER_500_TO_2500_PANEL
+  description: "For net quantity declared by length, area, or number on a principal display panel above 500 cm2 and up to 2500 cm2, the old Rule 7 table required 4 mm normal or 6 mm formed."
+  citation: "Rule 7(2)(ii) and Table-II, LMPC 2011 [historical wording superseded by 23 June 2017 / G.S.R. 629(E), effective 1 January 2018]"
+  verified: false
+  severity: VIOLATION
+  check: "historical_rule7_font_check_result == true"
+  # not confirmed for current enforcement: the historical Rule 7 Table-II was omitted by G.S.R. 629(E).
+
+- id: NUMERAL_HEIGHT_BY_LENGTH_AREA_NUMBER_LARGE_PANEL
+  description: "For net quantity declared by length, area, or number on a principal display panel above 2500 cm2, the old Rule 7 table required 6 mm normal and 6 mm formed."
+  citation: "Rule 7(2)(ii) and Table-II, LMPC 2011 [historical wording superseded by 23 June 2017 / G.S.R. 629(E), effective 1 January 2018]"
+  verified: false
+  severity: VIOLATION
+  check: "historical_rule7_font_check_result == true"
+  # not confirmed for current enforcement: the historical Rule 7 Table-II was omitted by G.S.R. 629(E).
+
+- id: PDP_HEIGHT_AREA_BELOW_50_NORMAL
+  description: "For a principal display panel area below 50 cm2, numerals and letters are at least 1.0 mm high in the ordinary case."
+  citation: "Rule 7(2) and Table-I, LMPC 2011 [23 June 2017 / G.S.R. 629(E), effective 1 January 2018; first-row molded value corrected by 7 November 2017 / G.S.R. 1373(E)]"
+  verified: false
+  severity: VIOLATION
+  check: "not rule7_height_check_applies or not pdp_area_band == 'A < 50 cm2' or not (container_text_process == 'normal') or declaration_numeral_and_letter_height_mm >= 1.0"
+  not confirmed this round: G.S.R. 629(E) uses A < 50 cm2, so the exact 50 cm2 boundary is not covered by this band; the source table also has strict boundaries for the next rows and needs human resolution for exact-boundary packages.
+
+- id: PDP_HEIGHT_AREA_BELOW_50_MOLDED
+  description: "For a principal display panel area below 50 cm2, numerals and letters are at least 2.0 mm high when blown, formed, or molded on the container."
+  citation: "Rule 7(2) and Table-I, LMPC 2011 [23 June 2017 / G.S.R. 629(E), effective 1 January 2018; first-row molded value corrected by 7 November 2017 / G.S.R. 1373(E)]"
+  verified: false
+  severity: VIOLATION
+  check: "not rule7_height_check_applies or not pdp_area_band == 'A < 50 cm2' or not (container_text_process in ['blown','formed','molded']) or declaration_numeral_and_letter_height_mm >= 2.0"
+  not confirmed this round: G.S.R. 629(E) uses A < 50 cm2, so the exact 50 cm2 boundary is not covered by this band; the source table also has strict boundaries for the next rows and needs human resolution for exact-boundary packages.
+
+- id: PDP_HEIGHT_AREA_50_TO_100_NORMAL
+  description: "For the Table-I principal-display-panel area band above 50 cm2 and up to 100 cm2, numerals and letters are at least 1.5 mm high in the ordinary case."
+  citation: "Rule 7(2) and Table-I, LMPC 2011 [23 June 2017 / G.S.R. 629(E), effective 1 January 2018; first-row molded value corrected by 7 November 2017 / G.S.R. 1373(E)]"
+  verified: false
+  severity: VIOLATION
+  check: "not rule7_height_check_applies or not pdp_area_band == '50 cm2 to 100 cm2' or not (container_text_process == 'normal') or declaration_numeral_and_letter_height_mm >= 1.5"
+  not confirmed this round: G.S.R. 629(E) states 50 < A < 100 cm2, leaving exact 50 cm2 and 100 cm2 outside this band; human legal confirmation is needed for those boundaries.
+
+- id: PDP_HEIGHT_AREA_50_TO_100_MOLDED
+  description: "For the Table-I principal-display-panel area band above 50 cm2 and up to 100 cm2, numerals and letters are at least 3.0 mm high when blown, formed, or molded on the container."
+  citation: "Rule 7(2) and Table-I, LMPC 2011 [23 June 2017 / G.S.R. 629(E), effective 1 January 2018; first-row molded value corrected by 7 November 2017 / G.S.R. 1373(E)]"
+  verified: false
+  severity: VIOLATION
+  check: "not rule7_height_check_applies or not pdp_area_band == '50 cm2 to 100 cm2' or not (container_text_process in ['blown','formed','molded']) or declaration_numeral_and_letter_height_mm >= 3.0"
+  not confirmed this round: G.S.R. 629(E) states 50 < A < 100 cm2, leaving exact 50 cm2 and 100 cm2 outside this band; human legal confirmation is needed for those boundaries.
+
+- id: PDP_HEIGHT_AREA_100_TO_500_NORMAL
+  description: "For the Table-I principal-display-panel area band above 100 cm2 and up to 500 cm2, numerals and letters are at least 2.5 mm high in the ordinary case."
+  citation: "Rule 7(2) and Table-I, LMPC 2011 [23 June 2017 / G.S.R. 629(E), effective 1 January 2018; first-row molded value corrected by 7 November 2017 / G.S.R. 1373(E)]"
+  verified: false
+  severity: VIOLATION
+  check: "not rule7_height_check_applies or not pdp_area_band == '100 cm2 to 500 cm2' or not (container_text_process == 'normal') or declaration_numeral_and_letter_height_mm >= 2.5"
+  not confirmed this round: G.S.R. 629(E) states 100 < A < 500 cm2, leaving exact 100 cm2 and 500 cm2 outside this band; human legal confirmation is needed for those boundaries.
+
+- id: PDP_HEIGHT_AREA_100_TO_500_MOLDED
+  description: "For the Table-I principal-display-panel area band above 100 cm2 and up to 500 cm2, numerals and letters are at least 4.0 mm high when blown, formed, or molded on the container."
+  citation: "Rule 7(2) and Table-I, LMPC 2011 [23 June 2017 / G.S.R. 629(E), effective 1 January 2018; first-row molded value corrected by 7 November 2017 / G.S.R. 1373(E)]"
+  verified: false
+  severity: VIOLATION
+  check: "not rule7_height_check_applies or not pdp_area_band == '100 cm2 to 500 cm2' or not (container_text_process in ['blown','formed','molded']) or declaration_numeral_and_letter_height_mm >= 4.0"
+  not confirmed this round: G.S.R. 629(E) states 100 < A < 500 cm2, leaving exact 100 cm2 and 500 cm2 outside this band; human legal confirmation is needed for those boundaries.
+
+- id: PDP_HEIGHT_AREA_500_TO_2500_NORMAL
+  description: "For the Table-I principal-display-panel area band above 500 cm2 and up to 2500 cm2, numerals and letters are at least 4.0 mm high in the ordinary case."
+  citation: "Rule 7(2) and Table-I, LMPC 2011 [23 June 2017 / G.S.R. 629(E), effective 1 January 2018; first-row molded value corrected by 7 November 2017 / G.S.R. 1373(E)]"
+  verified: false
+  severity: VIOLATION
+  check: "not rule7_height_check_applies or not pdp_area_band == '500 cm2 to 2500 cm2' or not (container_text_process == 'normal') or declaration_numeral_and_letter_height_mm >= 4.0"
+  not confirmed this round: G.S.R. 629(E) states 500 < A < 2500 cm2, leaving exact 500 cm2 and 2500 cm2 outside this band; human legal confirmation is needed for those boundaries.
+
+- id: PDP_HEIGHT_AREA_500_TO_2500_MOLDED
+  description: "For the Table-I principal-display-panel area band above 500 cm2 and up to 2500 cm2, numerals and letters are at least 6.0 mm high when blown, formed, or molded on the container."
+  citation: "Rule 7(2) and Table-I, LMPC 2011 [23 June 2017 / G.S.R. 629(E), effective 1 January 2018; first-row molded value corrected by 7 November 2017 / G.S.R. 1373(E)]"
+  verified: false
+  severity: VIOLATION
+  check: "not rule7_height_check_applies or not pdp_area_band == '500 cm2 to 2500 cm2' or not (container_text_process in ['blown','formed','molded']) or declaration_numeral_and_letter_height_mm >= 6.0"
+  not confirmed this round: G.S.R. 629(E) states 500 < A < 2500 cm2, leaving exact 500 cm2 and 2500 cm2 outside this band; human legal confirmation is needed for those boundaries.
+
+- id: PDP_HEIGHT_AREA_ABOVE_2500_NORMAL
+  description: "For a principal display panel area above 2500 cm2, numerals and letters are at least 6.0 mm high in the ordinary case."
+  citation: "Rule 7(2) and Table-I, LMPC 2011 [23 June 2017 / G.S.R. 629(E), effective 1 January 2018; first-row molded value corrected by 7 November 2017 / G.S.R. 1373(E)]"
+  verified: false
+  severity: VIOLATION
+  check: "not rule7_height_check_applies or not pdp_area_band == 'A > 2500 cm2' or not (container_text_process == 'normal') or declaration_numeral_and_letter_height_mm >= 6.0"
+  not confirmed this round: G.S.R. 629(E) states 2500 < A cm2, leaving exact 2500 cm2 outside every current Table-I band as drafted; human legal confirmation is needed.
+
+- id: PDP_HEIGHT_AREA_ABOVE_2500_MOLDED
+  description: "For a principal display panel area above 2500 cm2, numerals and letters are at least 6.0 mm high when blown, formed, or molded on the container."
+  citation: "Rule 7(2) and Table-I, LMPC 2011 [23 June 2017 / G.S.R. 629(E), effective 1 January 2018; first-row molded value corrected by 7 November 2017 / G.S.R. 1373(E)]"
+  verified: false
+  severity: VIOLATION
+  check: "not rule7_height_check_applies or not pdp_area_band == 'A > 2500 cm2' or not (container_text_process in ['blown','formed','molded']) or declaration_numeral_and_letter_height_mm >= 6.0"
+  not confirmed this round: G.S.R. 629(E) states 2500 < A cm2, leaving exact 2500 cm2 outside every current Table-I band as drafted; human legal confirmation is needed.
+
+- id: GM_MARK_AT_TOP_OF_PDP
+  description: "A package containing genetically modified food bears the words GM at the top of the principal display panel."
+  citation: "Rule 6(7), LMPC 2011 [5 June 2012 / G.S.R. 427(E)]"
+  verified: true
+  severity: VIOLATION
+  check: "not genetically_modified_food or (gm_mark_present and gm_mark_at_top_of_pdp)"
+  # confirmed against Rule 6(7), LMPC 2011 [5 June 2012 / G.S.R. 427(E)]
+
+- id: COSMETIC_ORIGIN_DOT_PRESENT
+  description: "A package of soap, shampoo, toothpaste, or other cosmetics and toiletries carries the required origin dot at the top of the principal display panel."
+  citation: "Rule 6(8), LMPC 2011 [16 June 2014 / G.S.R. 137]"
+  verified: true
+  severity: VIOLATION
+  check: "not product_in_rule6_8_category or origin_dot_at_top_of_pdp == true"
+  # confirmed against Rule 6(8), LMPC 2011 [16 June 2014 / G.S.R. 137]
+
+- id: COSMETIC_VEGETARIAN_DOT_COLOUR
+  description: "For an applicable product of vegetarian origin, the top-of-panel origin dot is green."
+  citation: "Rule 6(8), LMPC 2011 [16 June 2014 / G.S.R. 137]"
+  verified: true
+  severity: VIOLATION
+  check: "not product_in_rule6_8_category or product_origin != 'vegetarian' or origin_dot_colour == 'green'"
+  # confirmed against Rule 6(8), LMPC 2011 [16 June 2014 / G.S.R. 137]
+
+- id: COSMETIC_NONVEGETARIAN_DOT_COLOUR
+  description: "For an applicable product of non-vegetarian origin, the top-of-panel origin dot is red or brown."
+  citation: "Rule 6(8), LMPC 2011 [16 June 2014 / G.S.R. 137]"
+  verified: true
+  severity: VIOLATION
+  check: "not product_in_rule6_8_category or product_origin != 'non_vegetarian' or origin_dot_colour in ['red','brown']"
+  # confirmed against Rule 6(8), LMPC 2011 [16 June 2014 / G.S.R. 137]
+
+- id: MEDICAL_DEVICE_RULE7_HEIGHT_EXCEPTION
+  description: "A package containing a medical device is governed by the Medical Devices Rules, 2017 for the height of numerals and letters under Rule 7."
+  citation: "Rule 7(2) proviso, LMPC 2011 [23 October 2025 / G.S.R. 778(E)]"
+  verified: true
+  severity: VIOLATION
+  check: "not medical_device_package or rule7_height_check_applies == false"
+  # confirmed against Rule 7(2) proviso, LMPC 2011 [23 October 2025 / G.S.R. 778(E)]
+
+- id: MEDICAL_DEVICE_RULE7_WIDTH_EXCEPTION
+  description: "A package containing a medical device is governed by the Medical Devices Rules, 2017 for the width of numerals and letters under Rule 7."
+  citation: "Rule 7(3) proviso, LMPC 2011 [23 October 2025 / G.S.R. 778(E)]"
+  verified: true
+  severity: VIOLATION
+  check: "not medical_device_package or rule7_width_check_applies == false"
+  # confirmed against Rule 7(3) proviso, LMPC 2011 [23 October 2025 / G.S.R. 778(E)]
+
+- id: SHEET_COUNT_DECLARED
+  description: "A package containing sheets such as foil, facial tissue, waxed paper, or toilet paper states the number of usable sheets."
+  citation: "Rule 16, LMPC 2011"
+  verified: true
+  severity: VIOLATION
+  check: "not sheet_commodity or usable_sheet_count_present == true"
+  # confirmed against Rule 16, LMPC 2011
+
+- id: SHEET_DIMENSIONS_DECLARED
+  description: "A package containing sheets states the dimensions of each sheet."
+  citation: "Rule 16, LMPC 2011"
+  verified: true
+  severity: VIOLATION
+  check: "not sheet_commodity or sheet_dimensions_present == true"
+  # confirmed against Rule 16, LMPC 2011
+
+- id: TEXTILE_NUMBER_DECLARED
+  description: "A package containing a listed textile commodity states the number of pieces."
+  citation: "Rule 14, LMPC 2011"
+  verified: true
+  severity: VIOLATION
+  check: "not textile_rule14_commodity or piece_count_present == true"
+  # confirmed against Rule 14, LMPC 2011
+
+- id: TEXTILE_FINISHED_DIMENSIONS_DECLARED
+  description: "A package containing a listed textile commodity states the finished dimensions."
+  citation: "Rule 14, LMPC 2011"
+  verified: true
+  severity: VIOLATION
+  check: "not textile_rule14_commodity or finished_dimensions_present == true"
+  # confirmed against Rule 14, LMPC 2011
+
+- id: TEXTILE_DIFFERENT_PIECE_DIMENSIONS_DECLARED
+  description: "A package containing multiple textile pieces of different dimensions states the dimensions of each such piece."
+  citation: "Rule 14 proviso, LMPC 2011"
+  verified: true
+  severity: VIOLATION
+  check: "not textile_multiple_different_dimensions or every_piece_has_dimensions == true"
+  # confirmed against Rule 14 proviso, LMPC 2011
+
+- id: TEXTILE_DIFFERENT_PIECE_PRICE_DECLARED
+  description: "A package containing multiple textile pieces of different dimensions states the retail sale price of each such piece."
+  citation: "Rule 14 proviso, LMPC 2011"
+  verified: true
+  severity: VIOLATION
+  check: "not textile_multiple_different_dimensions or every_piece_has_mrp == true"
+  # confirmed against Rule 14 proviso, LMPC 2011
+
+- id: TEXTILE_INDIVIDUAL_PIECE_DIMENSIONS_MARKED
+  description: "Each individual textile piece carries its dimensions when the second Rule 14 proviso applies."
+  citation: "Rule 14 second proviso, LMPC 2011"
+  verified: true
+  severity: VIOLATION
+  check: "not textile_individual_piece_marking_required or every_individual_piece_has_dimensions == true"
+  # confirmed against Rule 14 second proviso, LMPC 2011
+
+- id: TEXTILE_INDIVIDUAL_PIECE_PRICE_MARKED
+  description: "Each individual textile piece carries its sale price when the second Rule 14 proviso applies."
+  citation: "Rule 14 second proviso, LMPC 2011"
+  verified: true
+  severity: VIOLATION
+  check: "not textile_individual_piece_marking_required or every_individual_piece_has_price == true"
+  # confirmed against Rule 14 second proviso, LMPC 2011
+
+- id: PRICE_RELATED_DIMENSIONS_PRESENT
+  description: "When a commodity's dimensions determine its price, those dimensions are also declared."
+  citation: "Rule 15, LMPC 2011"
+  verified: true
+  severity: VIOLATION
+  check: "not price_depends_on_dimensions or related_dimensions_present == true"
+  # confirmed against Rule 15, LMPC 2011
+
+- id: PRICE_RELATED_WEIGHT_PRESENT
+  description: "When a commodity's weight determines its price, that weight is also declared."
+  citation: "Rule 15, LMPC 2011"
+  verified: true
+  severity: VIOLATION
+  check: "not price_depends_on_weight or related_weight_present == true"
+  # confirmed against Rule 15, LMPC 2011
+
+- id: BAG_CONTAINER_COUNT_DECLARED
+  description: "A bag-type container commodity states the number of bags."
+  citation: "Rule 17(i), LMPC 2011"
+  verified: true
+  severity: VIOLATION
+  check: "not bag_type_container_commodity or bag_count_present == true"
+  # confirmed against Rule 17(i), LMPC 2011
+
+- id: BAG_CONTAINER_DIMENSIONS_DECLARED
+  description: "A bag-type container commodity states the linear dimensions of the bags."
+  citation: "Rule 17(i), LMPC 2011"
+  verified: true
+  severity: VIOLATION
+  check: "not bag_type_container_commodity or bag_linear_dimensions_present == true"
+  # confirmed against Rule 17(i), LMPC 2011
+
+- id: RECTANGULAR_CONTAINER_COUNT_DECLARED
+  description: "A square, oblong, rectangular, or similar container commodity states the number of containers."
+  citation: "Rule 17(ii), LMPC 2011"
+  verified: true
+  severity: VIOLATION
+  check: "not rectangular_container_commodity or container_count_present == true"
+  # confirmed against Rule 17(ii), LMPC 2011
+
+- id: RECTANGULAR_CONTAINER_LENGTH_DECLARED
+  description: "A square, oblong, rectangular, or similar container commodity states length."
+  citation: "Rule 17(ii), LMPC 2011"
+  verified: true
+  severity: VIOLATION
+  check: "not rectangular_container_commodity or container_length_present == true"
+  # confirmed against Rule 17(ii), LMPC 2011
+
+- id: RECTANGULAR_CONTAINER_WIDTH_DECLARED
+  description: "A square, oblong, rectangular, or similar container commodity states width."
+  citation: "Rule 17(ii), LMPC 2011"
+  verified: true
+  severity: VIOLATION
+  check: "not rectangular_container_commodity or container_width_present == true"
+  # confirmed against Rule 17(ii), LMPC 2011
+
+- id: RECTANGULAR_CONTAINER_DEPTH_WHEN_REQUIRED
+  description: "A square, oblong, rectangular, or similar container commodity states depth when required."
+  citation: "Rule 17(ii), LMPC 2011"
+  verified: true
+  severity: VIOLATION
+  check: "not rectangular_container_commodity or not container_depth_required or container_depth_present == true"
+  # confirmed against Rule 17(ii), LMPC 2011
+
+- id: ROUND_CONTAINER_COUNT_DECLARED
+  description: "A circular or generally round container commodity states the number of commodities."
+  citation: "Rule 17(iii), LMPC 2011"
+  verified: true
+  severity: VIOLATION
+  check: "not round_container_commodity or container_count_present == true"
+  # confirmed against Rule 17(iii), LMPC 2011
+
+- id: ROUND_CONTAINER_DIAMETER_DECLARED
+  description: "A circular or generally round container commodity states its diameter."
+  citation: "Rule 17(iii), LMPC 2011"
+  verified: true
+  severity: VIOLATION
+  check: "not round_container_commodity or container_diameter_present == true"
+  # confirmed against Rule 17(iii), LMPC 2011
+
+- id: ROUND_CONTAINER_DEPTH_WHEN_REQUIRED
+  description: "A circular or generally round container commodity states depth when necessary."
+  citation: "Rule 17(iii), LMPC 2011"
+  verified: true
+  severity: VIOLATION
+  check: "not round_container_commodity or not container_depth_required or container_depth_present == true"
+  # confirmed against Rule 17(iii), LMPC 2011
+
+- id: WHOLESALE_MANUFACTURER_OR_IMPORTER_NAME_PRESENT
+  description: "A wholesale package states the manufacturer or importer name, or the packer name when the manufacturer or importer is not the packer."
+  citation: "Rule 24(a), LMPC 2011"
+  verified: true
+  severity: VIOLATION
+  check: "not wholesale_package or wholesale_identity_name_present == true"
+  # confirmed against Rule 24(a), LMPC 2011
+
+- id: WHOLESALE_MANUFACTURER_OR_IMPORTER_ADDRESS_PRESENT
+  description: "A wholesale package states the manufacturer or importer address, or the packer address when the manufacturer or importer is not the packer."
+  citation: "Rule 24(a), LMPC 2011"
+  verified: true
+  severity: VIOLATION
+  check: "not wholesale_package or wholesale_identity_address_present == true"
+  # confirmed against Rule 24(a), LMPC 2011
+
+- id: WHOLESALE_COMMODITY_IDENTITY
+  description: "A wholesale package states the identity of the commodity contained in it."
+  citation: "Rule 24(b), LMPC 2011"
+  verified: true
+  severity: VIOLATION
+  check: "not wholesale_package or wholesale_commodity_identity_present == true"
+  # confirmed against Rule 24(b), LMPC 2011
+
+- id: WHOLESALE_COUNT_OR_NET_QUANTITY
+  description: "A wholesale package states either the total number of retail packages or the net quantity in standard units."
+  citation: "Rule 24(c), LMPC 2011"
+  verified: true
+  severity: VIOLATION
+  check: "not wholesale_package or wholesale_retail_package_count_present or wholesale_net_quantity_present"
+  # confirmed against Rule 24(c), LMPC 2011
+
+- id: GARMENT_LOOSE_OPEN_ORIGIN_FOR_IMPORTED
+  description: "For an imported garment or hosiery sold loose or open under Rule 26(f), the country of origin or manufacture is stated."
+  citation: "Rule 26(f) proviso(i), LMPC 2011 [22 August 2022 / G.S.R. 648(E)]"
+  verified: true
+  severity: VIOLATION
+  check: "not loose_open_garment_exemption_package or not imported_product or country_of_origin_present == true"
+  # confirmed against Rule 26(f) proviso(i), LMPC 2011 [22 August 2022 / G.S.R. 648(E)]
+
+- id: GARMENT_LOOSE_OPEN_NAME_PRESENT
+  description: "For garments or hosiery sold loose or open at the point of sale under the exemption, the manufacturer, marketer, brand owner, importer, or seller name is shown."
+  citation: "Rule 26(f), LMPC 2011 [22 August 2022 / G.S.R. 648(E); current 2023 framework via G.S.R. 722(E)]"
+  verified: true
+  severity: VIOLATION
+  check: "not loose_open_garment_exemption_package or garment_identity_name_present == true"
+  # confirmed against Rule 26(f), LMPC 2011 [22 August 2022 / G.S.R. 648(E); current 2023 framework via G.S.R. 722(E)]
+
+- id: GARMENT_LOOSE_OPEN_ADDRESS_PRESENT
+  description: "For garments or hosiery sold loose or open at the point of sale under the exemption, the manufacturer, marketer, brand owner, importer, or seller address is shown."
+  citation: "Rule 26(f), LMPC 2011 [22 August 2022 / G.S.R. 648(E); current 2023 framework via G.S.R. 722(E)]"
+  verified: true
+  severity: VIOLATION
+  check: "not loose_open_garment_exemption_package or garment_identity_address_present == true"
+  # confirmed against Rule 26(f), LMPC 2011 [22 August 2022 / G.S.R. 648(E); current 2023 framework via G.S.R. 722(E)]
+
+- id: GARMENT_LOOSE_OPEN_CONSUMER_EMAIL
+  description: "For a garment or hosiery sold loose or open under Rule 26(f), consumer-care e-mail is shown."
+  citation: "Rule 26(f) proviso(ii), LMPC 2011 [22 August 2022 / G.S.R. 648(E)]"
+  verified: true
+  severity: VIOLATION
+  check: "not loose_open_garment_exemption_package or consumer_care_email_present == true"
+  # confirmed against Rule 26(f) proviso(ii), LMPC 2011 [22 August 2022 / G.S.R. 648(E)]
+
+- id: GARMENT_LOOSE_OPEN_CONSUMER_PHONE
+  description: "For a garment or hosiery sold loose or open under Rule 26(f), consumer-care phone number is shown."
+  citation: "Rule 26(f) proviso(ii), LMPC 2011 [22 August 2022 / G.S.R. 648(E)]"
+  verified: true
+  severity: VIOLATION
+  check: "not loose_open_garment_exemption_package or consumer_care_phone_present == true"
+  # confirmed against Rule 26(f) proviso(ii), LMPC 2011 [22 August 2022 / G.S.R. 648(E)]
+
+- id: GARMENT_SIZE_DECLARED
+  description: "For a garment or hosiery sold loose or open under Rule 26(f), the size is given in metric notation in cm or m, or by an internationally recognizable size indicator with the required metric detail."
+  citation: "Rule 26(f) proviso(iii), LMPC 2011 [6 October 2023 / G.S.R. 722(E)]"
+  verified: true
+  severity: VIOLATION
+  check: "not loose_open_garment_exemption_package or garment_size_metric_present == true"
+  # confirmed against Rule 26(f) proviso(iii), LMPC 2011 [6 October 2023 / G.S.R. 722(E)]
+
+- id: GARMENT_LOOSE_OPEN_MRP_PRESENT
+  description: "For a garment or hosiery sold loose or open under Rule 26(f), the maximum retail price is stated."
+  citation: "Rule 26(f) proviso(iv), LMPC 2011 [22 August 2022 / G.S.R. 648(E)]"
+  verified: true
+  severity: VIOLATION
+  check: "not loose_open_garment_exemption_package or mrp_present == true"
+  # confirmed against Rule 26(f) proviso(iv), LMPC 2011 [22 August 2022 / G.S.R. 648(E)]
+
+- id: GARMENT_LOOSE_OPEN_MRP_INCLUSIVE
+  description: "For a garment or hosiery sold loose or open under Rule 26(f), the stated maximum retail price is inclusive of all taxes."
+  citation: "Rule 26(f) proviso(iv), LMPC 2011 [22 August 2022 / G.S.R. 648(E)]"
+  verified: true
+  severity: VIOLATION
+  check: "not loose_open_garment_exemption_package or mrp_inclusive_of_all_taxes == true"
+  # confirmed against Rule 26(f) proviso(iv), LMPC 2011 [22 August 2022 / G.S.R. 648(E)]
+
+- id: GARMENT_LOOSE_OPEN_MRP_INR
+  description: "For a garment or hosiery sold loose or open under Rule 26(f), the maximum retail price is stated in Indian currency."
+  citation: "Rule 26(f) proviso(iv), LMPC 2011 [22 August 2022 / G.S.R. 648(E)]"
+  verified: true
+  severity: VIOLATION
+  check: "not loose_open_garment_exemption_package or mrp_currency == 'INR'"
+  # confirmed against Rule 26(f) proviso(iv), LMPC 2011 [22 August 2022 / G.S.R. 648(E)]
+
+- id: LOOSE_ECOMMERCE_NAME_PRESENT
+  description: "For loose commodities ordered through e-commerce under the exemption, the manufacturer, marketer, brand owner, importer, or seller name is shown."
+  citation: "Rule 26(g)(i), LMPC 2011 [6 October 2023 / G.S.R. 722(E)]"
+  verified: true
+  severity: VIOLATION
+  check: "not loose_ecommerce_exemption_package or loose_ecommerce_identity_name_present == true"
+  # confirmed against Rule 26(g)(i), LMPC 2011 [6 October 2023 / G.S.R. 722(E)]
+
+- id: LOOSE_ECOMMERCE_ADDRESS_PRESENT
+  description: "For loose commodities ordered through e-commerce under the exemption, the manufacturer, marketer, brand owner, importer, or seller address is shown."
+  citation: "Rule 26(g)(i), LMPC 2011 [6 October 2023 / G.S.R. 722(E)]"
+  verified: true
+  severity: VIOLATION
+  check: "not loose_ecommerce_exemption_package or loose_ecommerce_identity_address_present == true"
+  # confirmed against Rule 26(g)(i), LMPC 2011 [6 October 2023 / G.S.R. 722(E)]
+
+- id: LOOSE_ECOMMERCE_ORIGIN_FOR_IMPORTED
+  description: "For imported loose commodities ordered through e-commerce under Rule 26(g), country of origin or manufacture is stated."
+  citation: "Rule 26(g) proviso(i), LMPC 2011 [6 October 2023 / G.S.R. 722(E)]"
+  verified: true
+  severity: VIOLATION
+  check: "not loose_ecommerce_exemption_package or not imported_product or country_of_origin_present == true"
+  # confirmed against Rule 26(g) proviso(i), LMPC 2011 [6 October 2023 / G.S.R. 722(E)]
+
+- id: LOOSE_ECOMMERCE_CONSUMER_EMAIL
+  description: "For loose commodities ordered through e-commerce under Rule 26(g), consumer-care e-mail is shown."
+  citation: "Rule 26(g) proviso(ii), LMPC 2011 [6 October 2023 / G.S.R. 722(E)]"
+  verified: true
+  severity: VIOLATION
+  check: "not loose_ecommerce_exemption_package or consumer_care_email_present == true"
+  # confirmed against Rule 26(g) proviso(ii), LMPC 2011 [6 October 2023 / G.S.R. 722(E)]
+
+- id: LOOSE_ECOMMERCE_CONSUMER_PHONE
+  description: "For loose commodities ordered through e-commerce under Rule 26(g), consumer-care phone number is shown."
+  citation: "Rule 26(g) proviso(ii), LMPC 2011 [6 October 2023 / G.S.R. 722(E)]"
+  verified: true
+  severity: VIOLATION
+  check: "not loose_ecommerce_exemption_package or consumer_care_phone_present == true"
+  # confirmed against Rule 26(g) proviso(ii), LMPC 2011 [6 October 2023 / G.S.R. 722(E)]
+
+- id: LOOSE_ECOMMERCE_MRP_PRESENT
+  description: "For loose commodities ordered through e-commerce under Rule 26(g), the retail sale price is stated."
+  citation: "Rule 26(g) proviso(iii), LMPC 2011 [6 October 2023 / G.S.R. 722(E)]"
+  verified: true
+  severity: VIOLATION
+  check: "not loose_ecommerce_exemption_package or mrp_present == true"
+  # confirmed against Rule 26(g) proviso(iii), LMPC 2011 [6 October 2023 / G.S.R. 722(E)]
+
+- id: LOOSE_ECOMMERCE_MRP_INCLUSIVE
+  description: "For loose commodities ordered through e-commerce under Rule 26(g), the retail sale price is inclusive of all taxes."
+  citation: "Rule 26(g) proviso(iii), LMPC 2011 [6 October 2023 / G.S.R. 722(E)]"
+  verified: true
+  severity: VIOLATION
+  check: "not loose_ecommerce_exemption_package or mrp_inclusive_of_all_taxes == true"
+  # confirmed against Rule 26(g) proviso(iii), LMPC 2011 [6 October 2023 / G.S.R. 722(E)]
+
+- id: LOOSE_ECOMMERCE_MRP_INR
+  description: "For loose commodities ordered through e-commerce under Rule 26(g), the retail sale price is stated in Indian currency."
+  citation: "Rule 26(g) proviso(iii), LMPC 2011 [6 October 2023 / G.S.R. 722(E)]"
+  verified: true
+  severity: VIOLATION
+  check: "not loose_ecommerce_exemption_package or mrp_currency == 'INR'"
+  # confirmed against Rule 26(g) proviso(iii), LMPC 2011 [6 October 2023 / G.S.R. 722(E)]
+
+- id: LOOSE_ECOMMERCE_NET_QUANTITY
+  description: "For loose commodities ordered through e-commerce under Rule 26(g), net quantity is declared in the standard unit or, when sold by number, the number is declared."
+  citation: "Rule 26(g) proviso(iv), LMPC 2011 [6 October 2023 / G.S.R. 722(E)]"
+  verified: true
+  severity: VIOLATION
+  check: "not loose_ecommerce_exemption_package or net_quantity_present == true"
+  # confirmed against Rule 26(g) proviso(iv), LMPC 2011 [6 October 2023 / G.S.R. 722(E)]
+
+- id: SMALL_PACK_PAN_MASALA_NOT_EXEMPT
+  description: "A pan masala package is not treated as exempt under Rule 26(a) merely because its net weight or measure is 10 g or 10 ml or less."
+  citation: "Rule 26(a) second proviso, LMPC 2011 [2 December 2025 / G.S.R. 881(E), effective 1 February 2026]"
+  verified: true
+  severity: VIOLATION
+  check: "not is_pan_masala or not (net_quantity_g_ml <= 10) or small_pack_lmpc_exemption == false"
+  # confirmed against Rule 26(a) second proviso, LMPC 2011 [2 December 2025 / G.S.R. 881(E), effective 1 February 2026]
+
+- id: EDIBLE_OIL_ALLOWED_WEIGHT_OR_VOLUME
+  description: "Edible oil, vanaspati, ghee, or butter oil is declared by weight or volume as permitted by the Fourth Schedule."
+  citation: "Fourth Schedule serial 11, LMPC 2011 [6 October 2023 / G.S.R. 722(E)]"
+  verified: true
+  severity: VIOLATION
+  check: "not (fourth_schedule_commodity == 'edible_oil_vanaspati_ghee_butter_oil') or net_quantity_measure_type in ['mass','volume']"
+  # confirmed against Fourth Schedule serial 11, LMPC 2011 [6 October 2023 / G.S.R. 722(E)]
+
+- id: EDIBLE_OIL_VOLUME_ALSO_WEIGHT
+  description: "When edible oil, vanaspati, ghee, or butter oil is declared by volume, the net quantity is also declared by weight."
+  citation: "Fourth Schedule serial 11, LMPC 2011 [6 October 2023 / G.S.R. 722(E)]"
+  verified: true
+  severity: VIOLATION
+  check: "not ((fourth_schedule_commodity == 'edible_oil_vanaspati_ghee_butter_oil') and net_quantity_measure_type == 'volume') or net_quantity_mass_present == true"
+  # confirmed against Fourth Schedule serial 11, LMPC 2011 [6 October 2023 / G.S.R. 722(E)]
+
+- id: IMPORTED_PRODUCT_COUNTRY_OF_ORIGIN
+  description: "An imported product package states the country of origin, manufacture, or assembly."
+  citation: "Rule 6(1)(aa), LMPC 2011 [23 June 2017 / G.S.R. 629(E), effective 1 January 2018]"
+  verified: false
+  severity: VIOLATION
+  check: "not imported_product or country_of_origin_present == true"
+  # not verified: added this round as a machine-checkable gap-fill from G.S.R. 629(E).
+
+- id: BEST_BEFORE_OR_USE_BY_DATE_DECLARED
+  description: "Where the commodity may become unfit for human consumption after a period of time, the label states the best-before or use-by date, month, and year."
+  citation: "Rule 6(1)(da), LMPC 2011 [23 June 2017 / G.S.R. 629(E), effective 1 January 2018]"
+  verified: false
+  severity: VIOLATION
+  check: "not best_before_use_by_required or best_before_use_by_date_present == true"
+  # not verified: added this round from the exact Rule 6(1)(da) amendment text.
+
+- id: WHEN_PACKED_QUALIFIER_RESTRICTED_TO_THIRD_SCHEDULE
+  description: "The words \"when packed\" are used only for a commodity listed in the Third Schedule."
+  citation: "Rule 11(4) and Third Schedule, LMPC 2011"
+  verified: false
+  severity: VIOLATION
+  check: "not when_packed_qualifier_present or third_schedule_commodity in ['soap','lotion','cream_non_milk']"
+  # not verified: added this round; machine-checkability depends on reliable commodity classification from the label.
+
+- id: ELECTRONIC_PRODUCT_ADDRESS_QR_NOTICE
+  description: "When an electronic product package supplies address information through QR code instead of on-package text, it tells consumers to scan the QR code for the address and related information."
+  citation: "Rule 6(1)(a) proviso, LMPC 2011 [23 June 2023 / G.S.R. 456(E)]"
+  verified: false
+  severity: VIOLATION
+  check: "not electronic_product or not electronic_address_declared_via_qr or electronic_address_qr_scan_notice_present == true"
+  # not verified: added this round from G.S.R. 456(E); interaction with Rule 10 should receive human legal review.
+
+- id: ELECTRONIC_PRODUCT_COMMON_NAME_QR_NOTICE
+  description: "When an electronic product package supplies the common or generic name through QR code instead of on-package text, it tells consumers to scan the QR code for that name."
+  citation: "Rule 6(1)(b) proviso, LMPC 2011 [23 June 2023 / G.S.R. 456(E)]"
+  verified: false
+  severity: VIOLATION
+  check: "not electronic_product or not electronic_common_name_declared_via_qr or electronic_common_name_qr_scan_notice_present == true"
+  # not verified: added this round from G.S.R. 456(E).
+
+- id: ELECTRONIC_PRODUCT_MULTI_PRODUCT_QR_NOTICE
+  description: "When an electronic product package supplies the name and number or quantity of multiple products through QR code instead of on-package text, it tells consumers to scan the QR code for that information."
+  citation: "Rule 6(1)(b) proviso, LMPC 2011 [23 June 2023 / G.S.R. 456(E)]"
+  verified: false
+  severity: VIOLATION
+  check: "not electronic_product or not electronic_multi_product_name_or_quantity_declared_via_qr or electronic_multi_product_qr_scan_notice_present == true"
+  # not verified: added this round from G.S.R. 456(E).
+
+- id: ELECTRONIC_PRODUCT_SIZE_DIMENSION_QR_NOTICE
+  description: "When an electronic product package supplies size and dimension information through QR code instead of on-package text, it tells consumers to scan the QR code for that information."
+  citation: "Rule 6(1)(f) proviso, LMPC 2011 [23 June 2023 / G.S.R. 456(E)]"
+  verified: false
+  severity: VIOLATION
+  check: "not electronic_product or not electronic_size_dimension_declared_via_qr or electronic_size_dimension_qr_scan_notice_present == true"
+  # not verified: added this round from G.S.R. 456(E).
+
+- id: ELECTRONIC_PRODUCT_PHONE_ON_PACKAGE
+  description: "An electronic product package states the consumer-care telephone number on the package itself."
+  citation: "Rule 6(2) proviso, LMPC 2011 [23 June 2023 / G.S.R. 456(E)]"
+  verified: false
+  severity: VIOLATION
+  check: "not electronic_product or consumer_care_phone_on_package_present == true"
+  # not verified: added this round from G.S.R. 456(E).
+
+- id: ELECTRONIC_PRODUCT_EMAIL_ON_PACKAGE
+  description: "An electronic product package states the consumer-care e-mail address on the package itself."
+  citation: "Rule 6(2) proviso, LMPC 2011 [23 June 2023 / G.S.R. 456(E)]"
+  verified: false
+  severity: VIOLATION
+  check: "not electronic_product or consumer_care_email_on_package_present == true"
+  # not verified: added this round from G.S.R. 456(E).
+
+- id: ELECTRONIC_PRODUCT_OTHER_INFO_QR_NOTICE
+  description: "When an electronic product package supplies other related consumer-care information through QR code instead of on-package text, it tells consumers to scan the QR code for that information."
+  citation: "Rule 6(2) proviso, LMPC 2011 [23 June 2023 / G.S.R. 456(E)]"
+  verified: false
+  severity: VIOLATION
+  check: "not electronic_product or not electronic_other_related_info_declared_via_qr or electronic_other_related_info_qr_scan_notice_present == true"
+  # not verified: added this round from G.S.R. 456(E).
+
+- id: FOURTH_SCHEDULE_AEROSOL_WEIGHT
+  description: "Aerosol products are declared by weight."
+  citation: "Fourth Schedule serial 1, LMPC 2011"
+  verified: false
+  severity: VIOLATION
+  check: "net_quantity_measure_type == 'mass'"
+  # not verified: added this round as a machine-checkable Fourth Schedule gap-fill; serial 15 reflects the later weight-or-volume amendment history.
+
+- id: FOURTH_SCHEDULE_ACIDS_LIQUID_WEIGHT_OR_VOLUME
+  description: "Acids in liquid form are declared by weight or volume."
+  citation: "Fourth Schedule serial 2, LMPC 2011"
+  verified: false
+  severity: VIOLATION
+  check: "net_quantity_measure_type in ['mass','volume']"
+  # not verified: added this round as a machine-checkable Fourth Schedule gap-fill; serial 15 reflects the later weight-or-volume amendment history.
+
+- id: FOURTH_SCHEDULE_COMPRESSED_GAS_WEIGHT
+  description: "Compressed or liquefied gas other than liquefied petroleum gas is declared by weight."
+  citation: "Fourth Schedule serial 3, LMPC 2011"
+  verified: false
+  severity: VIOLATION
+  check: "net_quantity_measure_type == 'mass' and compressed_gas_exception_applies == true"
+  # not verified: added this round as a machine-checkable Fourth Schedule gap-fill; serial 15 reflects the later weight-or-volume amendment history.
+
+- id: FOURTH_SCHEDULE_COMPRESSED_GAS_EQUIVALENT_VOLUME
+  description: "Compressed or liquefied gas other than liquefied petroleum gas has an equivalent-volume declaration."
+  citation: "Fourth Schedule serial 3, LMPC 2011"
+  verified: false
+  severity: VIOLATION
+  check: "compressed_gas_exception_applies == false or gas_equivalent_volume_present == true"
+  # not verified: added this round as a machine-checkable Fourth Schedule gap-fill; serial 15 reflects the later weight-or-volume amendment history.
+
+- id: FOURTH_SCHEDULE_COMPRESSED_GAS_TEMPERATURE_PRESSURE
+  description: "The equivalent volume for compressed or liquefied gas is stated at the required temperature and pressure."
+  citation: "Fourth Schedule serial 3, LMPC 2011"
+  verified: false
+  severity: VIOLATION
+  check: "compressed_gas_exception_applies == false or gas_equivalent_volume_temperature_pressure_present == true"
+  # not verified: added this round as a machine-checkable Fourth Schedule gap-fill; serial 15 reflects the later weight-or-volume amendment history.
+
+- id: FOURTH_SCHEDULE_CURD_WEIGHT
+  description: "Curd is declared by weight."
+  citation: "Fourth Schedule serial 4, LMPC 2011"
+  verified: false
+  severity: VIOLATION
+  check: "fourth_schedule_commodity != 'curd' or net_quantity_measure_type == 'mass'"
+  # not verified: added this round as a machine-checkable Fourth Schedule gap-fill; serial 15 reflects the later weight-or-volume amendment history.
+
+- id: FOURTH_SCHEDULE_ELECTRIC_CABLES_LENGTH_OR_WEIGHT
+  description: "Electric cables are declared by length or weight."
+  citation: "Fourth Schedule serial 5, LMPC 2011"
+  verified: false
+  severity: VIOLATION
+  check: "fourth_schedule_commodity != 'electric_cables' or net_quantity_measure_type in ['length','mass']"
+  # not verified: added this round as a machine-checkable Fourth Schedule gap-fill; serial 15 reflects the later weight-or-volume amendment history.
+
+- id: FOURTH_SCHEDULE_ELECTRIC_WIRE_LENGTH_OR_WEIGHT
+  description: "Electric wire is declared by length or weight."
+  citation: "Fourth Schedule serial 6, LMPC 2011"
+  verified: false
+  severity: VIOLATION
+  check: "fourth_schedule_commodity != 'electric_wire' or net_quantity_measure_type in ['length','mass']"
+  # not verified: added this round as a machine-checkable Fourth Schedule gap-fill; serial 15 reflects the later weight-or-volume amendment history.
+
+- id: FOURTH_SCHEDULE_FENCING_WIRE_NUMBER_OR_WEIGHT
+  description: "Fencing wire is declared by number or weight."
+  citation: "Fourth Schedule serial 7, LMPC 2011"
+  verified: false
+  severity: VIOLATION
+  check: "fourth_schedule_commodity != 'fencing_wire' or net_quantity_measure_type in ['number','mass']"
+  # not verified: added this round as a machine-checkable Fourth Schedule gap-fill; serial 15 reflects the later weight-or-volume amendment history.
+
+- id: FOURTH_SCHEDULE_FRUITS_NUMBER_OR_WEIGHT
+  description: "Fruits are declared by number or weight."
+  citation: "Fourth Schedule serial 8, LMPC 2011"
+  verified: false
+  severity: VIOLATION
+  check: "fourth_schedule_commodity != 'fruits' or net_quantity_measure_type in ['number','mass']"
+  # not verified: added this round as a machine-checkable Fourth Schedule gap-fill; serial 15 reflects the later weight-or-volume amendment history.
+
+- id: FOURTH_SCHEDULE_FURNACE_OIL_WEIGHT_OR_VOLUME
+  description: "Furnace oil is declared by weight or volume."
+  citation: "Fourth Schedule serial 9, LMPC 2011"
+  verified: false
+  severity: VIOLATION
+  check: "fourth_schedule_commodity != 'furnace_oil' or net_quantity_measure_type in ['mass','volume']"
+  # not verified: added this round as a machine-checkable Fourth Schedule gap-fill; serial 15 reflects the later weight-or-volume amendment history.
+
+- id: FOURTH_SCHEDULE_HEAVY_RESIDUAL_FUEL_OIL_WEIGHT
+  description: "Heavy residual fuel oil is declared by weight."
+  citation: "Fourth Schedule serial 12, LMPC 2011"
+  verified: false
+  severity: VIOLATION
+  check: "fourth_schedule_commodity != 'heavy_residual_fuel_oil' or net_quantity_measure_type == 'mass'"
+  # not verified: added this round as a machine-checkable Fourth Schedule gap-fill; serial 15 reflects the later weight-or-volume amendment history.
+
+- id: FOURTH_SCHEDULE_INDUSTRIAL_DIESEL_FUEL_VOLUME
+  description: "Industrial diesel fuel is declared by volume."
+  citation: "Fourth Schedule serial 13, LMPC 2011"
+  verified: false
+  severity: VIOLATION
+  check: "fourth_schedule_commodity != 'industrial_diesel_fuel' or net_quantity_measure_type == 'volume'"
+  # not verified: added this round as a machine-checkable Fourth Schedule gap-fill; serial 15 reflects the later weight-or-volume amendment history.
+
+- id: FOURTH_SCHEDULE_HONEY_MALT_SYRUP_TREACLE_WEIGHT
+  description: "Honey, malt-extract, golden syrup, and treacle are declared by weight."
+  citation: "Fourth Schedule serial 14, LMPC 2011"
+  verified: false
+  severity: VIOLATION
+  check: "fourth_schedule_commodity != 'honey_malt_extract_golden_syrup_treacle' or net_quantity_measure_type == 'mass'"
+  # not verified: added this round as a machine-checkable Fourth Schedule gap-fill; serial 15 reflects the later weight-or-volume amendment history.
+
+- id: FOURTH_SCHEDULE_ICE_CREAM_WEIGHT_OR_VOLUME
+  description: "Ice cream and other similar frozen products are declared by weight or volume."
+  citation: "Fourth Schedule serial 15, LMPC 2011 [24 October 2011 / G.S.R. 784(E); 5 June 2012 / G.S.R. 426(E)]"
+  verified: false
+  severity: VIOLATION
+  check: "fourth_schedule_commodity != 'ice_cream_frozen_products' or net_quantity_measure_type in ['mass','volume']"
+  # not verified: added this round as a machine-checkable Fourth Schedule gap-fill; serial 15 reflects the later weight-or-volume amendment history.
+
+- id: FOURTH_SCHEDULE_LIQUID_CHEMICALS_WEIGHT_OR_VOLUME
+  description: "Liquid chemicals are declared by weight or volume."
+  citation: "Fourth Schedule serial 16, LMPC 2011"
+  verified: false
+  severity: VIOLATION
+  check: "fourth_schedule_commodity != 'liquid_chemicals' or net_quantity_measure_type in ['mass','volume']"
+  # not verified: added this round as a machine-checkable Fourth Schedule gap-fill; serial 15 reflects the later weight-or-volume amendment history.
+
+- id: FOURTH_SCHEDULE_LIQUEFIED_PETROLEUM_GAS_WEIGHT
+  description: "Liquefied petroleum gas is declared by weight."
+  citation: "Fourth Schedule serial 17, LMPC 2011"
+  verified: false
+  severity: VIOLATION
+  check: "fourth_schedule_commodity != 'lpg' or net_quantity_measure_type == 'mass'"
+  # not verified: added this round as a machine-checkable Fourth Schedule gap-fill; serial 15 reflects the later weight-or-volume amendment history.
+
+- id: FOURTH_SCHEDULE_NAILS_WOOD_SCREWS_NUMBER_OR_WEIGHT
+  description: "Nails and wood screws are declared by number or weight."
+  citation: "Fourth Schedule serial 18, LMPC 2011"
+  verified: false
+  severity: VIOLATION
+  check: "fourth_schedule_commodity != 'nails_wood_screws' or net_quantity_measure_type in ['number','mass']"
+  # not verified: added this round as a machine-checkable Fourth Schedule gap-fill; serial 15 reflects the later weight-or-volume amendment history.
+
+- id: FOURTH_SCHEDULE_PAINTS_VARNISH_STAINS_ENAMELS_VOLUME
+  description: "Paints other than paste or solid paint, varnish, varnish stains, and enamels are declared by volume."
+  citation: "Fourth Schedule serial 19, LMPC 2011"
+  verified: false
+  severity: VIOLATION
+  check: "fourth_schedule_commodity != 'paint_varnish_stains_enamels' or net_quantity_measure_type == 'volume'"
+  # not verified: added this round as a machine-checkable Fourth Schedule gap-fill; serial 15 reflects the later weight-or-volume amendment history.
+
+- id: FOURTH_SCHEDULE_PASTE_SOLID_PAINT_WEIGHT
+  description: "Paste paint and solid paint are declared by weight."
+  citation: "Fourth Schedule serial 20, LMPC 2011"
+  verified: false
+  severity: VIOLATION
+  check: "fourth_schedule_commodity != 'paste_solid_paint' or net_quantity_measure_type == 'mass'"
+  # not verified: added this round as a machine-checkable Fourth Schedule gap-fill; serial 15 reflects the later weight-or-volume amendment history.
+
+- id: FOURTH_SCHEDULE_RASGULLA_GULABJAMUN_WEIGHT
+  description: "Rasgulla, Gulabjamun, and other sweet preparations are declared by weight."
+  citation: "Fourth Schedule serial 21, LMPC 2011"
+  verified: false
+  severity: VIOLATION
+  check: "fourth_schedule_commodity != 'rasgulla_gulabjamun_sweets' or net_quantity_measure_type == 'mass'"
+  # not verified: added this round as a machine-checkable Fourth Schedule gap-fill; serial 15 reflects the later weight-or-volume amendment history.
+
+- id: FOURTH_SCHEDULE_READY_MADE_GARMENTS_NUMBER
+  description: "Ready-made garments are declared by number."
+  citation: "Fourth Schedule serial 22, LMPC 2011"
+  verified: false
+  severity: VIOLATION
+  check: "fourth_schedule_commodity != 'ready_made_garments' or net_quantity_measure_type == 'number'"
+  # not verified: added this round as a machine-checkable Fourth Schedule gap-fill; serial 15 reflects the later weight-or-volume amendment history.
+
+- id: FOURTH_SCHEDULE_SAUCES_WEIGHT
+  description: "Sauces of all kinds are declared by weight."
+  citation: "Fourth Schedule serial 23, LMPC 2011"
+  verified: false
+  severity: VIOLATION
+  check: "fourth_schedule_commodity != 'sauces' or net_quantity_measure_type == 'mass'"
+  # not verified: added this round as a machine-checkable Fourth Schedule gap-fill; serial 15 reflects the later weight-or-volume amendment history.
+
+- id: FOURTH_SCHEDULE_TYRES_TUBES_NUMBER
+  description: "Tyres and tubes are declared by number."
+  citation: "Fourth Schedule serial 24, LMPC 2011"
+  verified: false
+  severity: VIOLATION
+  check: "fourth_schedule_commodity != 'tyres_tubes' or net_quantity_measure_type == 'number'"
+  # not verified: added this round as a machine-checkable Fourth Schedule gap-fill; serial 15 reflects the later weight-or-volume amendment history.
+
+- id: FOURTH_SCHEDULE_YARN_WEIGHT_OR_LENGTH
+  description: "Yarn is declared by weight or by length of yarn."
+  citation: "Fourth Schedule serial 25, LMPC 2011"
+  verified: false
+  severity: VIOLATION
+  check: "fourth_schedule_commodity != 'yarn' or net_quantity_measure_type in ['mass','length']"
+  # not verified: added this round as a machine-checkable Fourth Schedule gap-fill; serial 15 reflects the later weight-or-volume amendment history.
+
+- id: FOURTH_SCHEDULE_COSMETICS_WEIGHT_OR_MEASURE
+  description: "Cosmetics including creams, shampoo, lotions, and perfumes are declared by weight or measure."
+  citation: "Fourth Schedule serial 26, LMPC 2011"
+  verified: false
+  severity: VIOLATION
+  check: "fourth_schedule_commodity != 'cosmetics' or net_quantity_measure_type in ['mass','measure']"
+  # not verified: added this round as a machine-checkable Fourth Schedule gap-fill; serial 15 reflects the later weight-or-volume amendment history.
+
+# NOT INCLUDED — requires manual/contextual judgment or information beyond physical label OCR:
+# Rule 3 — Chapter II applicability still depends on package size and whether the consumer is industrial/institutional; the latter is not a label-only fact.
+# Rule 4(1) — pre-packing prohibition depends on package/transaction state beyond OCR.
+# Rule 4(2) — promotional-group compliance depends on group/package relationships.
+# Rule 6(1)(a), Explanations I-II — deeming and liability provisions are legal-responsibility questions.
+# Rule 6(1)(a)-(d) product-specific provisos — food, seeds, cosmetics, and other-law applicability require product classification outside ordinary OCR.
+# Rule 6(4)-(6) — multi-component placement and packaging-material transition depend on package configuration/history.
+# Rule 6(9) — label permission for imported packages is permissive, not a mandatory physical-label fact.
+# Rule 6(10) — e-commerce display of declarations is an online-listing requirement rather than a physical-label OCR check.
+# Rule 6(10A), G.S.R. 128(E) dated 13 February 2026 and G.S.R. 312(E) dated 27 April 2026 — searchable/sortable country-of-origin filters apply to e-commerce listings, not physical package OCR; G.S.R. 312(E) is future-effective from 1 July 2027.
+# Rule 6(1)(f) generic 'where sizes are relevant' trigger — relevance itself needs product/context judgment, although electronic-product QR notice requirements are now separately catalogued.
+# Rule 7(1) — the permission to use a card/tape for packages of capacity ten cubic centimetres or less is permissive, not a mandatory violation check.
+# Rule 7(4)/(5) — other-law exceptions and principal-display-panel geometry/area calculation require contextual or geometric inputs beyond ordinary OCR.
+# Rule 8(1) all-declarations-on-PDP architecture — interaction with the electronic-product QR exceptions under G.S.R. 456(E) needs human legal interpretation before production.
+# Rule 9(1)(a) — 'legible and prominent' is not wholly objective from OCR alone.
+# Rule 9(2) — reading through a liquid requires physical package inspection.
+# Rule 9(3) — outer-wrapper requirements depend on transparency and packaging configuration.
+# Rule 11 — actual net quantity and environmental-variation conditions require physical measurement and product context.
+# Rule 11(4) / Third Schedule eligibility now has a catalogue check, but commodity classification can still require contextual judgment.
+# Rule 12(4) — whether dimensions/number are necessary depends on the commodity and consumer-information context.
+# Rule 14-17 remaining conditional triggers — only objectively classifiable label consequences are catalogued; residual 'where necessary' triggers require context.
+# Rule 18 — sale-price enforcement, tax-revision procedures, retailer conduct, and weighing-machine obligations are not physical-label OCR facts.
+# Rules 19-22 — sampling, actual quantity, statistical-average, and maximum-permissible-error procedures require measurements and enforcement context.
+# Rule 23 — 'deceptive package' requires subjective design-purpose and justification analysis.
+# Rule 24 proviso — alternative wholesale declarations required by another law require contextual legal classification.
+# Rule 25 — export-package repacking/relabeling depends on transaction history and destination.
+# Rule 26(b)-(e), and remaining applicability conditions in 26(f)/(g) — exemptions depend on product/sales context; only machine-identifiable label consequences are catalogued.
+# Rules 27-30 — registration and administrative obligations are not label facts.
+# First Schedule — maximum permissible-error compliance requires physical quantity measurements.
+# Rule 31 — advertisement-specific declarations are not physical-package label checks.
+# Rule 32 — penalty provisions are not package-label facts.
+# Rule 33 — relaxation/compounding is case-specific administrative action.
+# Rule 34 — repeal-and-savings is historical/procedural.
+# G.S.R. 418(E) dated 29 May 2026 — bonded-warehouse timing and Rule 27 registration changes are contextual/administrative, not label-text facts.
+# READABILITY NOTE: Pages 1-43 were reviewed from the parsed PDF text. The file viewer did not provide raster page images for pages 33-34, so those pages were not visually inspected; their parsed text was available and reviewed.
