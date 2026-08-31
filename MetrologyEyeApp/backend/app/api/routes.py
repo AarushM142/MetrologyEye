@@ -44,13 +44,18 @@ def _validate_upload(file: UploadFile, data: bytes) -> None:
 
 
 async def _run(image_bytes: bytes, source: str, manual_px_per_mm: float | None) -> AnalyzeResponse:
+    print(f"\n{'='*60}")
+    print(f"[PIPELINE] Starting analysis | source={source} | size={len(image_bytes)} bytes")
+    print(f"{'='*60}")
     try:
         analysis, preview_png = await run_in_threadpool(
             pipeline.analyze, image_bytes, source, manual_px_per_mm
         )
     except ValueError as exc:  # undecodable image
+        print(f"[PIPELINE ERROR] ValueError: {exc}")
         raise HTTPException(status.HTTP_422_UNPROCESSABLE_ENTITY, str(exc)) from exc
     except Exception as exc:  # pragma: no cover - unexpected pipeline failure
+        print(f"[PIPELINE ERROR] {type(exc).__name__}: {exc}")
         logger.exception("Analysis failed")
         raise HTTPException(
             status.HTTP_500_INTERNAL_SERVER_ERROR, f"Analysis failed: {exc}"
@@ -62,6 +67,7 @@ async def _run(image_bytes: bytes, source: str, manual_px_per_mm: float | None) 
     # the directory is auto-created, so this is the durable audit trail behind the notice.
     storage.save_analysis(analysis)
 
+    print(f"[PIPELINE] ✓ Analysis complete: {analysis.analysis_id}")
     return analysis
 
 
@@ -76,9 +82,14 @@ async def analyze_upload(
     ),
 ) -> AnalyzeResponse:
     """Analyse an uploaded label image."""
+    print(f"\n[UPLOAD] Received file: {file.filename} | content_type={file.content_type}")
     data = await file.read()
+    print(f"[UPLOAD] Read {len(data)} bytes")
     _validate_upload(file, data)
     return await _run(data, "upload", manual_px_per_mm)
+
+
+
 
 
 @router.post("/analyze/url", response_model=AnalyzeResponse)

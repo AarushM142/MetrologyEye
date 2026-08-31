@@ -1,0 +1,10 @@
+{
+  "name": "metrologyeye-monorepo",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "bun x concurrently -c \"blue,green\" -n \"FRONTEND,BACKEND\" \"bun run dev:frontend\" \"bun run dev:backend\"",
+    "dev:frontend": "cd metrology-eye && bun run dev",
+    "dev:backend": "cd backend && venv/Scripts/python.exe -m uvicorn app.main:app --reload --port 8000"
+  }
+}

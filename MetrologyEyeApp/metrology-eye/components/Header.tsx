@@ -49,12 +49,6 @@ export function Header() {
           >
             Upload
           </Link>
-          <Link
-            href="/results/demo-suraj-oil-500g"
-            className="text-zinc-600 hover:text-zinc-950 dark:text-zinc-400 dark:hover:text-zinc-100 transition-colors"
-          >
-            Sample Demo
-          </Link>
         </nav>
       </div>
     </header>

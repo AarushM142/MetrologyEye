@@ -87,13 +87,10 @@ def extract(image_png: bytes, ocr_text: str = "") -> ExtractionResult:
     Never raises: on any failure the caller still gets an ExtractionResult carrying a
     degradation flag, so the pipeline reports honestly rather than 500-ing.
     """
-    from app.fixtures import fixture_extraction
-
     settings = get_settings()
     if not settings.extraction_available:
-        result = fixture_extraction()
-        result.degraded = [DegradationFlag.EXTRACT_MOCKED]
-        return result
+        logger.error("CRITICAL: DEEPINFRA_API_KEY is missing from .env!")
+        raise ValueError("AI Extraction is unavailable. Please check your DEEPINFRA_API_KEY.")
 
     prompt = PROMPT_TEMPLATE.format(
         ocr_text=ocr_text if ocr_text.strip() else "(OCR produced no readable text)",
@@ -104,9 +101,13 @@ def extract(image_png: bytes, ocr_text: str = "") -> ExtractionResult:
         "model": settings.deepinfra_model,
         "messages": [
             {
+                "role": "system",
+                "content": "/no_think\n" + prompt,
+            },
+            {
                 "role": "user",
                 "content": [
-                    {"type": "text", "text": prompt},
+                    {"type": "text", "text": "Extract mandatory declarations from this package label. Return JSON only. Use null for any field not clearly printed."},
                     {
                         "type": "image_url",
                         "image_url": {
@@ -134,14 +135,19 @@ def extract(image_png: bytes, ocr_text: str = "") -> ExtractionResult:
         )
         response.raise_for_status()
         latency_s = time.perf_counter() - start
+        raw_content = response.json()["choices"][0]["message"]["content"]
+        print(f"\n[VLM RAW RESPONSE]\n{raw_content}\n")
         values, full_text, ocr_corrections = _parse_payload(response.json())
     except httpx.HTTPStatusError as exc:
-        logger.error("DeepInfra returned %s: %s", exc.response.status_code, exc.response.text[:400])
-        # Fall back to raw OCR text so downstream rules can still run on what OCR found.
-        return ExtractionResult(full_text=ocr_text, degraded=[DegradationFlag.EXTRACT_FAILED])
-    except (httpx.HTTPError, KeyError, IndexError, ValueError) as exc:
-        logger.error("DeepInfra verification failed: %s", exc)
-        return ExtractionResult(full_text=ocr_text, degraded=[DegradationFlag.EXTRACT_FAILED])
+        error_msg = f"DeepInfra API Error {exc.response.status_code}: {exc.response.text[:400]}"
+        print(f"\n[CRITICAL DEEPINFRA ERROR]\n{error_msg}\n")
+        logger.error(error_msg)
+        raise RuntimeError(error_msg) from exc
+    except (httpx.HTTPError, KeyError, IndexError, RuntimeError) as exc:
+        error_msg = f"DeepInfra verification crashed: {exc}"
+        print(f"\n[CRITICAL DEEPINFRA ERROR]\n{error_msg}\n")
+        logger.error(error_msg)
+        raise RuntimeError(error_msg) from exc
 
     latency_ms = latency_s * 1000.0
     logger.info(f"VLM API Latency: {latency_s:.2f} seconds ({latency_ms:.0f} ms)")

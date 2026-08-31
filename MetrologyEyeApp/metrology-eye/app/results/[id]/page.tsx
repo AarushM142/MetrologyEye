@@ -19,21 +19,35 @@ import {
 
 export default function ResultsPage() {
   const params = useParams();
-  const id = (params?.id as string) || "demo-suraj-oil-500g";
+  const id = params?.id as string;
 
   const [analysis, setAnalysis] = useState<AnalyzeResponse | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
   const [selectedField, setSelectedField] = useState<string | null>(null);
   const [showCalibration, setShowCalibration] = useState<boolean>(false);
 
   useEffect(() => {
+    if (!id) {
+      setError("No analysis ID provided.");
+      setLoading(false);
+      return;
+    }
     let mounted = true;
     async function fetchResult() {
       setLoading(true);
-      const data = await getAnalysis(id);
-      if (mounted) {
-        setAnalysis(data);
-        setLoading(false);
+      setError(null);
+      try {
+        const data = await getAnalysis(id);
+        if (mounted) {
+          setAnalysis(data);
+          setLoading(false);
+        }
+      } catch (err) {
+        if (mounted) {
+          setError(err instanceof Error ? err.message : "Failed to load analysis");
+          setLoading(false);
+        }
       }
     }
     fetchResult();
@@ -42,7 +56,7 @@ export default function ResultsPage() {
     };
   }, [id]);
 
-  if (loading || !analysis) {
+  if (loading) {
     return (
       <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100 flex flex-col font-sans">
         <Header />
@@ -50,6 +64,24 @@ export default function ResultsPage() {
           <div className="text-center space-y-2">
             <div className="w-5 h-5 border-2 border-zinc-900 dark:border-zinc-100 border-t-transparent rounded-full animate-spin mx-auto" />
             <p className="text-xs text-zinc-500 font-mono">Loading inspection...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (error || !analysis) {
+    return (
+      <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100 flex flex-col font-sans">
+        <Header />
+        <div className="flex-1 flex items-center justify-center">
+          <div className="text-center space-y-3 max-w-md px-4">
+            <div className="text-3xl">⚠️</div>
+            <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">Analysis Failed</h2>
+            <p className="text-sm text-rose-600 dark:text-rose-400 font-mono">{error || "Unknown error"}</p>
+            <Link href="/" className="inline-block mt-4 px-4 py-2 bg-zinc-950 dark:bg-zinc-50 text-white dark:text-zinc-950 text-xs font-medium rounded-lg hover:bg-zinc-800 dark:hover:bg-zinc-200 transition-colors">
+              ← Back to Upload
+            </Link>
           </div>
         </div>
       </div>

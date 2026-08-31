@@ -7,7 +7,6 @@ import { Dropzone } from "@/components/Dropzone";
 import { CalibrationSlider } from "@/components/CalibrationSlider";
 import { ExtractionFallbackNotice } from "@/components/Phase8ErrorStates";
 import { analyzeUpload, analyzeUrl } from "@/lib/api";
-import { DEMO_ANALYSIS_ID } from "@/lib/fixtures";
 
 export default function UploadPage() {
   const router = useRouter();
@@ -88,7 +87,7 @@ export default function UploadPage() {
 
         {showFallbackNotice && (
           <ExtractionFallbackNotice
-            onUseDemoMode={() => router.push(`/results/${DEMO_ANALYSIS_ID}`)}
+            onUseDemoMode={() => router.push(`/`)}
           />
         )}
 
@@ -136,16 +135,7 @@ export default function UploadPage() {
           )}
         </div>
 
-        {/* Quick Demo Link */}
-        <div className="text-center pt-2">
-          <button
-            type="button"
-            onClick={() => router.push(`/results/${DEMO_ANALYSIS_ID}`)}
-            className="text-xs text-zinc-500 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100 font-medium transition-colors"
-          >
-            Or view demo inspection (Suraj Oil 500g) →
-          </button>
-        </div>
+
       </main>
     </div>
   );

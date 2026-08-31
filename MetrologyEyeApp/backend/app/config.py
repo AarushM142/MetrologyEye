@@ -17,7 +17,8 @@ class Settings(BaseSettings):
 
     # --- DeepInfra -----------------------------------------------------------
     deepinfra_api_key: str = ""
-    deepinfra_model: str = "meta-llama/Llama-3.2-90B-Vision-Instruct"
+    deepinfra_model: str = "Qwen/Qwen3-VL-30B-A3B-Instruct"  # faster
+    # deepinfra_model: str = "Qwen/Qwen3-VL-235B-A22B-Instruct"  # most accurate but slow
     deepinfra_timeout_s: float = 120.0
 
     # --- Server --------------------------------------------------------------
